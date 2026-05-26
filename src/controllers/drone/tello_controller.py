@@ -4,7 +4,10 @@ import asyncio
 import contextlib
 from typing import Optional
 
-from djitellopy import Tello
+try:
+    from djitellopy import Tello
+except ImportError:  # pragma: no cover
+    Tello = None
 
 from ...models.drone_state import DroneState
 from .drone_controller import DroneController
@@ -12,6 +15,8 @@ from .drone_controller import DroneController
 
 class TelloController(DroneController):
     def __init__(self):
+        if Tello is None:
+            raise ImportError("djitellopy is required to instantiate TelloController")
         self._tello = Tello()
         self._state = DroneState()
         self._monitor_task: Optional[asyncio.Task[None]] = None
@@ -46,6 +51,10 @@ class TelloController(DroneController):
 
     async def emergency(self):
         self._tello.emergency()
+
+    async def flip(self, direction: str) -> None:
+        async with self._command_lock:
+            self._tello.flip(direction)
 
     async def move_up(
         self,

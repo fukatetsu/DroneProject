@@ -8,14 +8,58 @@
         "type": "auto"
       }
     },
-
+    {
+      "id": "move_forward",
+      "comment": "前進（狭い室内用）",
+      "show": "move_forward",
+      "transition": {
+        "type": "duration",
+        "seconds": 4
+      }
+    },
+    {
+      "id": "rotate_right",
+      "comment": "右回転 90°",
+      "show": "rotate_right",
+      "transition": {
+        "type": "duration",
+        "seconds": 4
+      }
+    },
+    {
+      "id": "small_square",
+      "comment": "小さな四角形を描く複合動作",
+      "show": "small_square",
+      "transition": {
+        "type": "duration",
+        "seconds": 12
+      }
+    },
+    {
+      "id": "flip_forward",
+      "comment": "前方宙返り",
+      "show": "flip_forward",
+      "transition": {
+        "type": "duration",
+        "seconds": 5
+      }
+    },
+    {
+      "id": "rotate_left",
+      "comment": "左回転 180°",
+      "show": "rotate_180",
+      "transition": {
+        "type": "duration",
+        "seconds": 5
+      }
+    },
     {
       "id": "landing",
       "comment": "着陸",
       "show": "landing",
       "transition": {
         "type": "duration",
-        "seconds": 10
+        "seconds": 8
       }
     }
   ]

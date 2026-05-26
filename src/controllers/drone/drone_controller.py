@@ -94,6 +94,10 @@ class DroneController(ABC):
         pass
 
     @abstractmethod
+    async def flip(self, direction: str) -> None:
+        pass
+
+    @abstractmethod
     def send_rc_control(
         self,
         left_right: int,
