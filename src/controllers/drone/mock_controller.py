@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import Optional
 
 from .drone_controller import DroneController
@@ -12,6 +13,7 @@ class MockDroneController(DroneController):
         self._state = DroneState(battery=100, height=0, speed_x=0, speed_y=0, speed_z=0, yaw=0, pitch=0, roll=0)
         self._command_lock = asyncio.Lock()
         self._connected = False
+        self._simulation_task: Optional[asyncio.Task[None]] = None
 
     @property
     def state(self) -> DroneState:
@@ -20,9 +22,14 @@ class MockDroneController(DroneController):
     async def connect(self) -> None:
         self._connected = True
         print("[MockDroneController] connect")
+        self._simulation_task = asyncio.create_task(self._simulate_state())
 
     async def disconnect(self) -> None:
         self._connected = False
+        if self._simulation_task is not None:
+            self._simulation_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._simulation_task
         print("[MockDroneController] disconnect")
 
     async def takeoff(self) -> None:
@@ -103,7 +110,37 @@ class MockDroneController(DroneController):
         async with self._command_lock:
             print(f"[MockDroneController] go_xyz_speed({x}, {y}, {z}, {speed})")
 
+    async def _simulate_state(self) -> None:
+        try:
+            while self._connected:
+                if self._state.speed_z != 0:
+                    next_height = self._state.height + int(self._state.speed_z * 0.1)
+                    next_height = max(0, next_height)
+                    self._state = self._state.__class__(
+                        battery=self._state.battery,
+                        height=next_height,
+                        speed_x=self._state.speed_x,
+                        speed_y=self._state.speed_y,
+                        speed_z=self._state.speed_z,
+                        yaw=self._state.yaw,
+                        pitch=self._state.pitch,
+                        roll=self._state.roll,
+                    )
+                await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            pass
+
     def send_rc_control(self, left_right: int, forward_back: int, up_down: int, yaw: int) -> None:
         if self._command_lock.locked():
             return
+        self._state = self._state.__class__(
+            battery=self._state.battery,
+            height=self._state.height,
+            speed_x=left_right,
+            speed_y=forward_back,
+            speed_z=up_down,
+            yaw=self._state.yaw,
+            pitch=self._state.pitch,
+            roll=self._state.roll,
+        )
         print(f"[MockDroneController] send_rc_control({left_right}, {forward_back}, {up_down}, {yaw})")

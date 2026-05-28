@@ -13,6 +13,7 @@ if str(ROOT_DIR) not in sys.path:
 from src.registry import registry
 from src.runtime.scenario import Scenario
 from src.runtime.scenario_runner import ScenarioRunner
+from src.shows.flight.bounce_show import BounceShow
 from src.shows.flight.flip_forward_show import FlipForwardShow
 from src.shows.flight.landing_show import LandingShow
 from src.shows.flight.move_forward_show import MoveForwardShow
@@ -20,6 +21,7 @@ from src.shows.flight.rotate_180_show import Rotate180Show
 from src.shows.flight.rotate_right_show import RotateRightShow
 from src.shows.flight.small_square_show import SmallSquareShow
 from src.shows.flight.takeoff_show import TakeoffShow
+from src.shows.flight.state_monitor_show import StateMonitorShow
 from src.controllers.drone import DroneController, MockDroneController
 
 try:
@@ -36,6 +38,8 @@ def register_builtin_shows() -> None:
     registry.register("rotate_180", lambda drone: Rotate180Show(drone))
     registry.register("flip_forward", lambda drone: FlipForwardShow(drone))
     registry.register("small_square", lambda drone: SmallSquareShow(drone))
+    registry.register("bounce", lambda drone: BounceShow(drone))
+    registry.register("state_monitor", lambda drone: StateMonitorShow(drone))
 
 
 def create_show_factory(drone: DroneController) -> Callable[[str], object]:
