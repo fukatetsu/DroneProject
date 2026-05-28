@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+import contextlib
 from pathlib import Path
 from typing import Callable
 
@@ -22,7 +23,10 @@ from src.shows.flight.rotate_right_show import RotateRightShow
 from src.shows.flight.small_square_show import SmallSquareShow
 from src.shows.flight.takeoff_show import TakeoffShow
 from src.shows.flight.state_monitor_show import StateMonitorShow
+from src.shows.flight.align_yaw_show import AlignYawShow
 from src.controllers.drone import DroneController, MockDroneController
+from src.analyzers import HoopAnalyzer
+from src.inputs.imu.udp_imu_input import UdpImuInput
 
 try:
     from src.controllers.drone import TelloController
@@ -40,6 +44,7 @@ def register_builtin_shows() -> None:
     registry.register("small_square", lambda drone: SmallSquareShow(drone))
     registry.register("bounce", lambda drone: BounceShow(drone))
     registry.register("state_monitor", lambda drone: StateMonitorShow(drone))
+    registry.register("align_yaw", lambda drone: AlignYawShow(drone))
 
 
 def create_show_factory(drone: DroneController) -> Callable[[str], object]:
@@ -89,14 +94,51 @@ async def main() -> None:
 
         print("Drone connected. Running scenario...")
 
+        # Start UDP IMU input and feed a HoopAnalyzer instance from it.
+        hoop_analyzer = HoopAnalyzer()
+        imu_input = UdpImuInput()
+        await imu_input.start()
+
+        async def _feed_analyzer() -> None:
+            last_state = None
+            try:
+                while True:
+                    imu = imu_input.state
+
+                    # Detect change by comparing dataclass equality (frozen dataclass supports value equality)
+                    if imu != last_state:
+                        hoop_analyzer.update(imu)
+                        last_state = imu
+
+                    await asyncio.sleep(0.01)
+            except asyncio.CancelledError:
+                return
+
+        feed_task = asyncio.create_task(_feed_analyzer())
+
+        # Wrap show factory to inject the HoopAnalyzer into AlignYawShow explicitly.
+        base_factory = create_show_factory(drone)
+
+        def injected_factory(name: str):
+            if name == "align_yaw":
+                return AlignYawShow(drone, analyzer=hoop_analyzer)
+            return base_factory(name)
+
         runner = ScenarioRunner(
             scenario=scenario,
-            show_factory=create_show_factory(drone),
+            show_factory=injected_factory,
             on_land=drone.land,
             on_emergency=drone.emergency,
         )
 
-        await runner.run()
+        try:
+            await runner.run()
+        finally:
+            # stop feeder task and IMU input
+            feed_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await feed_task
+            await imu_input.stop()
     finally:
         print("Stopping drone and disconnecting...")
         await drone.disconnect()

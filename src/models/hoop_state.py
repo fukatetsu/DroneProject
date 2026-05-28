@@ -12,3 +12,5 @@ class HoopState:
     yaw: float = 0.0
     rotation_speed: float = 0.0
     rotation_direction: RotationDirection = RotationDirection.NONE
+    accel_magnitude: float = 0.0
+    gyro_magnitude: float = 0.0

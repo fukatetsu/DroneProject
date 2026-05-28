@@ -43,12 +43,25 @@ class HoopAnalyzer(Analyzer):
                 elif yaw_diff < 0:
                     rotation_direction = RotationDirection.CLOCKWISE
 
+        accel_magnitude = math.sqrt(
+            imu_state.accel_x ** 2
+            + imu_state.accel_y ** 2
+            + imu_state.accel_z ** 2
+        )
+        gyro_magnitude = math.sqrt(
+            imu_state.gyro_x ** 2
+            + imu_state.gyro_y ** 2
+            + imu_state.gyro_z ** 2
+        )
+
         self._state = HoopState(
             roll=imu_state.roll,
             pitch=imu_state.pitch,
             yaw=imu_state.yaw,
             rotation_speed=rotation_speed,
             rotation_direction=rotation_direction,
+            accel_magnitude=accel_magnitude,
+            gyro_magnitude=gyro_magnitude,
         )
         self._previous_yaw = imu_state.yaw
         self._previous_time = current_time
