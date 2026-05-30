@@ -1,0 +1,22 @@
+{
+  "shows": [
+    {
+      "id": "takeoff",
+      "comment": "離陸",
+      "show": "takeoff",
+      "transition": { "type": "auto" }
+    },
+    {
+      "id": "state_monitor",
+      "comment": "状態監視ショー",
+      "show": "state_monitor",
+      "transition": { "type": "duration", "seconds": 12 }
+    },
+    {
+      "id": "landing",
+      "comment": "着陸",
+      "show": "landing",
+      "transition": { "type": "duration", "seconds": 6 }
+    }
+  ]
+}

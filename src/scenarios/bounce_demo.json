@@ -1,0 +1,28 @@
+{
+  "shows": [
+    {
+      "id": "takeoff",
+      "comment": "離陸",
+      "show": "takeoff",
+      "transition": {
+        "type": "auto"
+      }
+    },
+    {
+      "id": "bounce",
+      "comment": "高さ100cmまで移動後，跳ねるような上下運動を実行",
+      "show": "bounce",
+      "transition": {
+        "type": "auto"
+      }
+    },
+    {
+      "id": "landing",
+      "comment": "着陸",
+      "show": "landing",
+      "transition": {
+        "type": "auto"
+      }
+    }
+  ]
+}

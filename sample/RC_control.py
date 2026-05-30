@@ -18,7 +18,7 @@ while time.time() - start_time < 30:
     tello.send_rc_control(-10, 0, 0, 0)
     time.sleep(1)
 
-    # # 右へ
+    # 右へ
     tello.send_rc_control(10, 0, 0, 0)
     time.sleep(1)
 
