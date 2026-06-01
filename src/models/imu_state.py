@@ -26,26 +26,76 @@ class ImuState:
     yaw: float = 0.0
 
     @classmethod
-    def from_udp_datapoints(cls, dt: Sequence[float]) -> "ImuState":
-        if len(dt) != 14:
-            raise ValueError(f"UDP IMU message must contain 14 values, got {len(dt)}")
+    def _normalize_angle_deg(cls, angle: float) -> float:
+        remainder = math.fmod(angle + 180.0, 360.0)
+        if remainder < 0:
+            remainder += 360.0
+        return remainder - 180.0
 
-        record_id = dt[0]
-        accel_x = dt[1]
-        accel_y = dt[2]
-        accel_z = dt[3]
-        gyro_x = dt[4]
-        gyro_y = dt[5]
-        gyro_z = dt[6]
-        mag_x = dt[7]
-        mag_y = dt[8]
-        mag_z = dt[9]
-        quat_w = dt[10]
-        quat_x = dt[11]
-        quat_y = dt[12]
-        quat_z = dt[13]
+    @classmethod
+    def _accel_to_roll_pitch(cls, accel_x: float, accel_y: float, accel_z: float) -> tuple[float, float]:
+        roll = math.degrees(math.atan2(accel_y, accel_z))
+        pitch = math.degrees(math.atan2(-accel_x, math.hypot(accel_y, accel_z)))
+        return roll, pitch
 
-        roll, pitch, yaw = cls.quaternion_to_euler(quat_w, quat_x, quat_y, quat_z)
+    @classmethod
+    def _mag_to_yaw(cls, mag_x: float, mag_y: float, mag_z: float, roll: float, pitch: float) -> float:
+        roll_rad = math.radians(roll)
+        pitch_rad = math.radians(pitch)
+
+        mag_x_h = mag_x * math.cos(pitch_rad) + mag_z * math.sin(pitch_rad)
+        mag_y_h = (
+            mag_x * math.sin(roll_rad) * math.sin(pitch_rad)
+            + mag_y * math.cos(roll_rad)
+            - mag_z * math.sin(roll_rad) * math.cos(pitch_rad)
+        )
+
+        yaw = math.degrees(math.atan2(-mag_y_h, mag_x_h))
+        return cls._normalize_angle_deg(yaw)
+
+    @classmethod
+    def _fuse_angle(cls, gyro_angle: float, measured_angle: float, alpha: float) -> float:
+        angle_error = cls._normalize_angle_deg(measured_angle - gyro_angle)
+        fused = gyro_angle + (1.0 - alpha) * angle_error
+        return cls._normalize_angle_deg(fused)
+
+    @classmethod
+    def from_udp_datapoints(
+        cls,
+        data: Sequence[float],
+        previous_state: "ImuState" | None = None,
+        dt: float = 0.0,
+        alpha: float = 0.98,
+    ) -> "ImuState":
+        if len(data) != 14:
+            raise ValueError(f"UDP IMU message must contain 14 values, got {len(data)}")
+
+        record_id = data[0]
+        accel_x = data[1]
+        accel_y = data[2]
+        accel_z = data[3]
+        gyro_x = data[4]
+        gyro_y = data[5]
+        gyro_z = data[6]
+        mag_x = data[7]
+        mag_y = data[8]
+        mag_z = data[9]
+
+        roll_acc, pitch_acc = cls._accel_to_roll_pitch(accel_x, accel_y, accel_z)
+        yaw_mag = cls._mag_to_yaw(mag_x, mag_y, mag_z, roll_acc, pitch_acc)
+
+        if previous_state is None or dt <= 0.0:
+            roll = roll_acc
+            pitch = pitch_acc
+            yaw = yaw_mag
+        else:
+            gyro_roll = previous_state.roll + gyro_x * dt
+            gyro_pitch = previous_state.pitch + gyro_y * dt
+            gyro_yaw = previous_state.yaw + gyro_z * dt
+
+            roll = cls._fuse_angle(gyro_roll, roll_acc, alpha)
+            pitch = cls._fuse_angle(gyro_pitch, pitch_acc, alpha)
+            yaw = cls._fuse_angle(gyro_yaw, yaw_mag, alpha)
 
         return cls(
             record_id=record_id,
@@ -58,37 +108,24 @@ class ImuState:
             mag_x=mag_x,
             mag_y=mag_y,
             mag_z=mag_z,
-            quat_w=quat_w,
-            quat_x=quat_x,
-            quat_y=quat_y,
-            quat_z=quat_z,
             roll=roll,
             pitch=pitch,
             yaw=yaw,
         )
 
     @classmethod
-    def from_udp_message(cls, message: str) -> "ImuState":
+    def from_udp_message(
+        cls,
+        message: str,
+        previous_state: "ImuState" | None = None,
+        dt: float = 0.0,
+        alpha: float = 0.98,
+    ) -> "ImuState":
         cleaned = message.replace(";\n", "").replace(";", "").strip()
         if not cleaned:
             raise ValueError("UDP IMU message is empty")
 
         values = [float(x) for x in cleaned.split()]
-        return cls.from_udp_datapoints(values)
+        return cls.from_udp_datapoints(values, previous_state=previous_state, dt=dt, alpha=alpha)
 
-    @staticmethod
-    def quaternion_to_euler(w: float, x: float, y: float, z: float) -> tuple[float, float, float]:
-        # Convert quaternion [w, x, y, z] to Euler angles in degrees.
-        t0 = 2.0 * (w * x + y * z)
-        t1 = 1.0 - 2.0 * (x * x + y * y)
-        roll = math.degrees(math.atan2(t0, t1))
 
-        t2 = 2.0 * (w * y - z * x)
-        t2 = max(-1.0, min(1.0, t2))
-        pitch = math.degrees(math.asin(t2))
-
-        t3 = 2.0 * (w * z + x * y)
-        t4 = 1.0 - 2.0 * (y * y + z * z)
-        yaw = math.degrees(math.atan2(t3, t4))
-
-        return roll, pitch, yaw
