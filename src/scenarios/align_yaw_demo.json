@@ -10,7 +10,7 @@
       "id": "align_yaw",
       "comment": "ヨー調整ショー",
       "show": "align_yaw",
-      "transition": { "type": "duration", "seconds": 30 }
+      "transition": { "type": "duration", "seconds": 60 }
     },
     {
       "id": "landing",
