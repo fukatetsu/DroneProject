@@ -29,10 +29,10 @@ class AlignYawShow(Show):
     def __init__(
         self,
         drone: DroneController,
-        duration_seconds: float = 30.0,
+        duration_seconds: float = 10.0,
         poll_interval: float = 0.1,
         yaw_tolerance_deg: float = 5.0,
-        max_yaw_speed: int = 40,
+        max_yaw_speed: int = 80,
         gain: float = 10.0,
         analyzer: Optional[HoopAnalyzer] = None,
     ) -> None:
@@ -63,45 +63,45 @@ class AlignYawShow(Show):
 
         end_time = time.monotonic() + self.duration_seconds
 
-        try:
-            while self._running and time.monotonic() < end_time:
-                # The analyzer is expected to be updated externally; the show
-                # only reads the `HoopState` produced by the analyzer.
-                hoop_yaw = self._analyzer.state.yaw
-                print(f"Hoop Yaw: {hoop_yaw}")
-                try:
-                    drone_yaw = self.drone.state.yaw
-                    print(f"Drone Yaw: {drone_yaw}")
-                except Exception:
-                    drone_yaw = 0.0
-
-                # compute shortest angle from drone to hoop
-                yaw_error = _normalize_angle(hoop_yaw - drone_yaw)
-
-                if abs(yaw_error) <= self.yaw_tolerance:
-                    yaw_speed = 0
-                else:
-                    # proportional control; scale error to speed range
-                    raw = int(self.gain * yaw_error)
-                    # keep within bounds
-                    if raw > 0:
-                        yaw_speed = min(self.max_yaw_speed, raw)
-                    else:
-                        yaw_speed = max(-self.max_yaw_speed, raw)
-
-                # Send yaw control; other axes zero
-                try:
-                    self.drone.send_rc_control(0, 0, 0, int(yaw_speed))
-                except Exception:
-                    pass
-
-                await asyncio.sleep(self.poll_interval)
-        finally:
-            # stop motion
+        # try:
+        while True:
+            # The analyzer is expected to be updated externally; the show
+            # only reads the `HoopState` produced by the analyzer.
+            hoop_yaw = self._analyzer.state.roll
+            print(f"Hoop Yaw: {hoop_yaw}")
             try:
-                self.drone.send_rc_control(0, 0, 0, 0)
+                drone_yaw = self.drone.state.yaw
+                print(f"Drone Yaw: {drone_yaw}")
+            except Exception:
+                drone_yaw = 0.0
+
+            # compute shortest angle from drone to hoop
+            yaw_error = _normalize_angle(hoop_yaw - drone_yaw)
+
+            if abs(yaw_error) <= self.yaw_tolerance:
+                yaw_speed = 0
+            else:
+                # proportional control; scale error to speed range
+                raw = int(self.gain * yaw_error)
+                # keep within bounds
+                if raw > 0:
+                    yaw_speed = min(self.max_yaw_speed, raw)
+                else:
+                    yaw_speed = max(-self.max_yaw_speed, raw)
+
+            # Send yaw control; other axes zero
+            try:
+                self.drone.send_rc_control(0, 15, 0, int(yaw_speed))
             except Exception:
                 pass
+
+            await asyncio.sleep(self.poll_interval)
+        # finally:
+        #     # stop motion
+        #     try:
+        #         self.drone.send_rc_control(0, 0, 0, 0)
+        #     except Exception:
+        #         pass
 
     async def stop(self) -> None:
         self._running = False

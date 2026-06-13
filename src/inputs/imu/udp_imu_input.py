@@ -5,6 +5,7 @@ from asyncio import DatagramProtocol
 from typing import Optional
 
 from ...models.imu_state import ImuState
+from .dt_estimator import DtEstimator
 from .input_device import InputDevice
 
 
@@ -31,14 +32,30 @@ class UdpImuInput(InputDevice):
     ) -> None:
         self.host = host
         self.port = port
+
         self._state = ImuState()
+
         self._transport: Optional[asyncio.BaseTransport] = None
         self._protocol: Optional[_UdpImuProtocol] = None
         self._started = False
 
+        self._dt_estimator = DtEstimator(window_size=20)
+
     @property
     def state(self) -> ImuState:
         return self._state
+    
+    @property
+    def dt(self) -> float:
+        return self._dt_estimator.dt
+
+    @property
+    def sample_rate(self) -> float:
+        return self._dt_estimator.sample_rate
+
+    @property
+    def dt_ready(self) -> bool:
+        return self._dt_estimator.ready
 
     async def start(self) -> None:
         if self._started:
@@ -59,14 +76,21 @@ class UdpImuInput(InputDevice):
         self._started = False
 
     def _process_message(self, message: str) -> None:
-        # Support one or more semicolon-delimited IMU packets in a single UDP payload.
+        self._dt_estimator.update()
+
         fragments = message.split(";")
+
         for fragment in fragments:
             cleaned = fragment.strip()
+
             if not cleaned:
                 continue
 
             try:
-                self._state = ImuState.from_udp_message(cleaned)
+                self._state = ImuState.from_udp_message(
+                    cleaned,
+                    previous_state=self._state,
+                    dt=self._dt_estimator.dt,
+                )
             except ValueError:
                 pass
