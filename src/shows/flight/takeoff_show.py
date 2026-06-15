@@ -15,4 +15,4 @@ class TakeoffShow(Show):
         await asyncio.sleep(1)
 
     async def stop(self) -> None:
-        self.drone.send_rc_control(0, 0, 0, 0)
+        return None

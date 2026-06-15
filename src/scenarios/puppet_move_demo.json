@@ -1,0 +1,22 @@
+{
+    "shows": [
+    {
+        "id": "takeoff",
+        "comment": "離陸",
+        "show": "takeoff",
+        "transition": { "type": "auto" }
+    },
+    {
+        "id": "puppet_move",
+        "comment": "パペット移動テスト",
+        "show": "puppet_move",
+        "transition": { "type": "auto" }
+    },
+    {
+        "id": "landing",
+        "comment": "着陸",
+        "show": "landing",
+        "transition": { "type": "auto" }
+    }
+    ]
+}

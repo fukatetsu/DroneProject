@@ -122,6 +122,19 @@ class TelloController(DroneController):
         async with self._command_lock:
             self._tello.go_xyz_speed(x, y, z, speed)
 
+    async def curve_xyz_speed(
+        self,
+        x1: int,
+        y1: int,
+        z1: int,
+        x2: int,
+        y2: int,
+        z2: int,
+        speed: int,
+    ):
+        async with self._command_lock:
+            self._tello.curve_xyz_speed(x1, y1, z1, x2, y2, z2, speed)
+
     def send_rc_control(
         self,
         left_right: int,

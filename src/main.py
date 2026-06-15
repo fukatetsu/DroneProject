@@ -24,6 +24,10 @@ from src.shows.flight.small_square_show import SmallSquareShow
 from src.shows.flight.takeoff_show import TakeoffShow
 from src.shows.flight.state_monitor_show import StateMonitorShow
 from src.shows.flight.align_yaw_show import AlignYawShow
+from src.shows.flight.puppet_move import PuppetShow
+from src.shows.flight.butterfly_escape import ButterflyEscapeShow   
+from src.shows.flight.follow_pitch_show import FollowPitchShow
+from src.shows.flight.arc_move_test_show import ArcMoveTestShow
 from src.controllers.drone import DroneController, MockDroneController
 from src.analyzers import HoopAnalyzer
 from src.inputs.imu.udp_imu_input import UdpImuInput
@@ -45,13 +49,20 @@ def register_builtin_shows() -> None:
     registry.register("bounce", lambda drone: BounceShow(drone))
     registry.register("state_monitor", lambda drone: StateMonitorShow(drone))
     registry.register("align_yaw", lambda drone: AlignYawShow(drone))
-
+    registry.register("butterfly_escape", lambda drone: ButterflyEscapeShow(drone))
+    registry.register("follow_pitch", lambda drone: FollowPitchShow(drone))
+    registry.register("puppet_move", lambda drone: PuppetShow(drone))
+    registry.register("arc_move_test", lambda drone: ArcMoveTestShow(drone))
 
 def create_show_factory(drone: DroneController) -> Callable[[str], object]:
     return lambda name: registry.create(name, drone)
 
 
-def create_drone() -> DroneController:
+def create_drone(use_mock: bool = False) -> DroneController:
+    if use_mock:
+        print("Starting with MockDroneController by request")
+        return MockDroneController()
+
     if TelloController is None:
         print("djitellopy not installed: using MockDroneController for demo execution")
         return MockDroneController()
@@ -70,11 +81,16 @@ async def main() -> None:
         default=str(Path(__file__).parent / "scenarios" / "demo.json"),
         help="Path to scenario JSON file",
     )
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help="Start with MockDroneController instead of a real Tello controller.",
+    )
     args = parser.parse_args()
 
     register_builtin_shows()
     scenario = Scenario.load_from_file(args.scenario)
-    drone = create_drone()
+    drone = create_drone(use_mock=args.mock)
 
     print(f"Loading scenario: {args.scenario}")
     print(f"Shows: {[step.show_name for step in scenario.steps]}")

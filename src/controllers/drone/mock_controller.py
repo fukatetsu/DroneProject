@@ -110,6 +110,21 @@ class MockDroneController(DroneController):
         async with self._command_lock:
             print(f"[MockDroneController] go_xyz_speed({x}, {y}, {z}, {speed})")
 
+    async def curve_xyz_speed(
+        self,
+        x1: int,
+        y1: int,
+        z1: int,
+        x2: int,
+        y2: int,
+        z2: int,
+        speed: int,
+    ) -> None:
+        async with self._command_lock:
+            print(
+                f"[MockDroneController] curve_xyz_speed({x1}, {y1}, {z1}, {x2}, {y2}, {z2}, {speed})"
+            )
+
     async def _simulate_state(self) -> None:
         try:
             while self._connected:
