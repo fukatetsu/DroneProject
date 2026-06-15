@@ -150,6 +150,19 @@ class DroneController(ABC):
         pass
 
     @abstractmethod
+    async def curve_xyz_speed(
+        self,
+        x1: int,
+        y1: int,
+        z1: int,
+        x2: int,
+        y2: int,
+        z2: int,
+        speed: int
+    ):
+        pass
+
+    @abstractmethod
     def send_rc_control(
         self,
         left_right: int,
@@ -193,6 +206,7 @@ class TelloController(
 | DroneController | DJITelloPy |
 |---------------|------------|
 | connect | tello.connect |
+| disconnect | tello.end / tello.disconnect |
 | takeoff | tello.takeoff |
 | land | tello.land |
 | emergency | tello.emergency |
@@ -205,7 +219,11 @@ class TelloController(
 | rotate_clockwise | tello.rotate_clockwise |
 | rotate_counter_clockwise | tello.rotate_counter_clockwise |
 | go_xyz_speed | tello.go_xyz_speed |
+| curve_xyz_speed | tello.curve_xyz_speed |
 | send_rc_control | tello.send_rc_control |
+| flip | tello.flip |
+| streamon | tello.streamon |
+| streamoff | tello.streamoff |
 
 ---
 

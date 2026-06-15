@@ -94,6 +94,19 @@ class DroneController(ABC):
         pass
 
     @abstractmethod
+    async def curve_xyz_speed(
+        self,
+        x1: int,
+        y1: int,
+        z1: int,
+        x2: int,
+        y2: int,
+        z2: int,
+        speed: int,
+    ):
+        pass
+
+    @abstractmethod
     async def flip(self, direction: str) -> None:
         pass
 
