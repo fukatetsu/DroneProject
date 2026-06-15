@@ -118,6 +118,16 @@ class ScenarioRunner:
             if command is None:
                 return "advance"
             action = await self._process_command(command, payload)
+            if action == "pause_wait":
+                # Pause loop: wait for RESUME or other transition commands
+                while self._paused and self._running:
+                    command, payload = await self._wait_for_command_or_show(show_task)
+                    if command is None:
+                        return "advance"
+                    action = await self._process_command(command, payload)
+                    if action != "continue":
+                        return action
+                continue
             if action != "continue":
                 return action
         return "advance"
@@ -154,6 +164,19 @@ class ScenarioRunner:
                 if command_task in done:
                     command, payload = command_task.result()
                     action = await self._process_command(command, payload)
+                    if action == "pause_wait":
+                        # Pause loop during duration: timer pauses, wait for RESUME
+                        timer_task.cancel()
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await timer_task
+                        while self._paused and self._running:
+                            command, payload = await self._command_queue.get()
+                            action = await self._process_command(command, payload)
+                            if action != "continue":
+                                return action
+                        # Resume: restart timer
+                        timer_task = asyncio.create_task(asyncio.sleep(seconds))
+                        continue
                     if action != "continue":
                         return action
                     continue
@@ -175,6 +198,14 @@ class ScenarioRunner:
             if command is None:
                 return "advance"
             action = await self._process_command(command, payload)
+            if action == "pause_wait":
+                # Pause loop: wait for RESUME or other transition commands
+                while self._paused and self._running:
+                    command, payload = await self._command_queue.get()
+                    action = await self._process_command(command, payload)
+                    if action != "continue":
+                        return action
+                continue
             if action != "continue":
                 return action
         return "advance"
@@ -208,7 +239,7 @@ class ScenarioRunner:
     ) -> str:
         if command == ScenarioCommand.PAUSE.value:
             self._paused = True
-            return "continue"
+            return "pause_wait"
 
         if command == ScenarioCommand.RESUME.value:
             self._paused = False

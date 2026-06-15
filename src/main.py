@@ -29,6 +29,7 @@ from src.shows.flight.butterfly_escape import ButterflyEscapeShow
 from src.shows.flight.follow_pitch_show import FollowPitchShow
 from src.shows.flight.arc_move_test_show import ArcMoveTestShow
 from src.controllers.drone import DroneController, MockDroneController
+from src.controllers.keyboard import KeyboardController
 from src.analyzers import HoopAnalyzer
 from src.inputs.imu.udp_imu_input import UdpImuInput
 
@@ -147,6 +148,9 @@ async def main() -> None:
             on_emergency=drone.emergency,
         )
 
+        controller = KeyboardController(runner.send_command)
+        controller.start()
+
         try:
             await runner.run()
         finally:
@@ -155,6 +159,9 @@ async def main() -> None:
             with contextlib.suppress(asyncio.CancelledError):
                 await feed_task
             await imu_input.stop()
+            # stop keyboard controller
+            with contextlib.suppress(Exception):
+                await controller.stop()
     finally:
         print("Stopping drone and disconnecting...")
         await drone.disconnect()

@@ -20,3 +20,16 @@ class Show(ABC):
     @abstractmethod
     async def stop(self) -> None:
         pass
+    
+    async def emergency(self) -> None:
+        await self.drone.emergency()
+    
+    async def land(self) -> None:
+        self.drone.send_rc_control(
+            0,
+            0,
+            0,
+            0,
+        )
+
+        await self.drone.land()
