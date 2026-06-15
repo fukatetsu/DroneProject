@@ -8,6 +8,7 @@ from ..base.show import Show
 
 class TakeoffShow(Show):
     async def start(self) -> None:
+        print(f"Battery: {self.drone.state.battery}%")
         return None
 
     async def run(self) -> None:

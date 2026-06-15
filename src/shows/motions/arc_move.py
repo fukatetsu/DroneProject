@@ -13,7 +13,7 @@ async def arc_move(
     duration: float = 1.0,
     fb: int = 0,
     ud: int = 0,
-    interval: float = 0.05,
+    interval: float = 0.2,
 ) -> None:
     """
     円弧移動
