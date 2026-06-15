@@ -1,0 +1,1 @@
+python src/main.py --scenario src/scenarios/butterfly_demo.json
