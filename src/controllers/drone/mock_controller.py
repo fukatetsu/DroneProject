@@ -4,6 +4,11 @@ import asyncio
 import contextlib
 from typing import Optional
 
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
 from .drone_controller import DroneController
 from ...models.drone_state import DroneState
 
@@ -14,6 +19,10 @@ class MockDroneController(DroneController):
         self._command_lock = asyncio.Lock()
         self._connected = False
         self._simulation_task: Optional[asyncio.Task[None]] = None
+        self._video_capture: Optional[object] = None
+        self._video_stream_active = False
+        self._latest_frame = None
+        self._video_task: Optional[asyncio.Task[None]] = None
 
     @property
     def state(self) -> DroneState:
@@ -30,6 +39,10 @@ class MockDroneController(DroneController):
             self._simulation_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._simulation_task
+        if self._video_task is not None:
+            self._video_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._video_task
         print("[MockDroneController] disconnect")
 
     async def takeoff(self) -> None:
@@ -159,3 +172,54 @@ class MockDroneController(DroneController):
             roll=self._state.roll,
         )
         print(f"[MockDroneController] send_rc_control({left_right}, {forward_back}, {up_down}, {yaw})")
+
+    def start_video_stream(self) -> None:
+        if cv2 is None:
+            raise ImportError("opencv-python is required for video stream")
+        self._video_capture = cv2.VideoCapture(0)
+        self._video_stream_active = True
+        # Start background task to continuously capture frames
+        if self._video_task is None:
+            try:
+                loop = asyncio.get_event_loop()
+                self._video_task = loop.create_task(self._capture_frames())
+            except RuntimeError:
+                # No event loop in current thread
+                pass
+        print("[MockDroneController] start_video_stream")
+
+    def stop_video_stream(self) -> None:
+        self._video_stream_active = False
+        if self._video_task is not None:
+            self._video_task.cancel()
+            self._video_task = None
+        if self._video_capture is not None:
+            self._video_capture.release()
+            self._video_capture = None
+        self._latest_frame = None
+        print("[MockDroneController] stop_video_stream")
+
+    def get_video_frame(self):
+        """Get the latest buffered video frame (non-blocking)."""
+        return self._latest_frame
+
+    async def _capture_frames(self) -> None:
+        """Background task to continuously capture frames."""
+        try:
+            loop = asyncio.get_event_loop()
+            while self._video_stream_active:
+                try:
+                    if self._video_capture is not None:
+                        ret, frame = await loop.run_in_executor(None, self._video_capture.read)
+                        if ret:
+                            # Convert BGR to RGB
+                            if cv2 is not None:
+                                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                            self._latest_frame = frame
+                except Exception:
+                    pass
+                
+                # Small sleep to allow other tasks to run
+                await asyncio.sleep(0.01)
+        except asyncio.CancelledError:
+            self._latest_frame = None
