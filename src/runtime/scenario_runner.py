@@ -117,17 +117,32 @@ class ScenarioRunner:
             command, payload = await self._wait_for_command_or_show(show_task)
             if command is None:
                 return "advance"
-            action = await self._process_command(command, payload)
-            if action == "pause_wait":
-                # Pause loop: wait for RESUME or other transition commands
+            
+            # Keyboard PAUSE takes absolute priority: cancel show immediately
+            if command == ScenarioCommand.PAUSE.value:
+                self._paused = True
+                # Stop show task immediately
+                if not show_task.done():
+                    show_task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await show_task
+                
+                # Pause loop: wait only for user commands
                 while self._paused and self._running:
-                    command, payload = await self._wait_for_command_or_show(show_task)
-                    if command is None:
-                        return "advance"
+                    command, payload = await self._command_queue.get()
+                    
+                    # RESUME: restart show task
+                    if command == ScenarioCommand.RESUME.value:
+                        self._paused = False
+                        show_task = asyncio.create_task(self.current_show.run())
+                        break
+                    
                     action = await self._process_command(command, payload)
                     if action != "continue":
                         return action
                 continue
+            
+            action = await self._process_command(command, payload)
             if action != "continue":
                 return action
         return "advance"
@@ -163,20 +178,37 @@ class ScenarioRunner:
 
                 if command_task in done:
                     command, payload = command_task.result()
-                    action = await self._process_command(command, payload)
-                    if action == "pause_wait":
-                        # Pause loop during duration: timer pauses, wait for RESUME
+                    
+                    # Keyboard PAUSE takes absolute priority: cancel show and timer
+                    if command == ScenarioCommand.PAUSE.value:
+                        self._paused = True
+                        # Stop show task immediately
+                        if not show_task.done():
+                            show_task.cancel()
+                            with contextlib.suppress(asyncio.CancelledError):
+                                await show_task
+                        # Cancel timer
                         timer_task.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await timer_task
+                        
+                        # Pause loop: wait only for user commands
                         while self._paused and self._running:
                             command, payload = await self._command_queue.get()
+                            
+                            # RESUME: restart show and timer
+                            if command == ScenarioCommand.RESUME.value:
+                                self._paused = False
+                                show_task = asyncio.create_task(self.current_show.run())
+                                timer_task = asyncio.create_task(asyncio.sleep(seconds))
+                                break
+                            
                             action = await self._process_command(command, payload)
                             if action != "continue":
                                 return action
-                        # Resume: restart timer
-                        timer_task = asyncio.create_task(asyncio.sleep(seconds))
                         continue
+                    
+                    action = await self._process_command(command, payload)
                     if action != "continue":
                         return action
                     continue
@@ -197,15 +229,32 @@ class ScenarioRunner:
             command, payload = await self._wait_for_command_or_show(show_task)
             if command is None:
                 return "advance"
-            action = await self._process_command(command, payload)
-            if action == "pause_wait":
-                # Pause loop: wait for RESUME or other transition commands
+            
+            # Keyboard PAUSE takes absolute priority: cancel show immediately
+            if command == ScenarioCommand.PAUSE.value:
+                self._paused = True
+                # Stop show task immediately
+                if not show_task.done():
+                    show_task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await show_task
+                
+                # Pause loop: wait only for user commands
                 while self._paused and self._running:
                     command, payload = await self._command_queue.get()
+                    
+                    # RESUME: restart show task
+                    if command == ScenarioCommand.RESUME.value:
+                        self._paused = False
+                        show_task = asyncio.create_task(self.current_show.run())
+                        break
+                    
                     action = await self._process_command(command, payload)
                     if action != "continue":
                         return action
                 continue
+            
+            action = await self._process_command(command, payload)
             if action != "continue":
                 return action
         return "advance"
@@ -223,12 +272,23 @@ class ScenarioRunner:
             return_when=asyncio.FIRST_COMPLETED,
         )
 
+        # Keyboard command takes priority over show completion
+        if command_task in done:
+            # Command arrived first or show finished but command is ready
+            if show_task in done:
+                # Both completed; cancel show_task reference but return command
+                pass
+            command, payload = command_task.result()
+            return command, payload
+
+        # Show completed first, but check if command is queued (race condition)
         if show_task in done:
             command_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await command_task
             return None, None
 
+        # This shouldn't be reached, but fallback
         command, payload = command_task.result()
         return command, payload
 
@@ -239,7 +299,7 @@ class ScenarioRunner:
     ) -> str:
         if command == ScenarioCommand.PAUSE.value:
             self._paused = True
-            return "pause_wait"
+            return "continue"
 
         if command == ScenarioCommand.RESUME.value:
             self._paused = False
