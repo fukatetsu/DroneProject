@@ -67,8 +67,8 @@ class AlignYawShow(Show):
         while True:
             # The analyzer is expected to be updated externally; the show
             # only reads the `HoopState` produced by the analyzer.
-            hoop_yaw = self._analyzer.state.roll
-            print(f"Hoop Yaw: {hoop_yaw}")
+            hoop_roll = self._analyzer.state.roll
+            print(f"Hoop Roll: {hoop_roll}")
             try:
                 drone_yaw = self.drone.state.yaw
                 print(f"Drone Yaw: {drone_yaw}")
@@ -76,7 +76,7 @@ class AlignYawShow(Show):
                 drone_yaw = 0.0
 
             # compute shortest angle from drone to hoop
-            yaw_error = _normalize_angle(hoop_yaw - drone_yaw)
+            yaw_error = _normalize_angle(hoop_roll - drone_yaw)
 
             if abs(yaw_error) <= self.yaw_tolerance:
                 yaw_speed = 0
