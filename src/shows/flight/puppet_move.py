@@ -20,8 +20,8 @@ class PuppetShow(Show):
         for _ in range(10):
             await swing_move(
                 self.drone,
-                lr=80,
-                duration=3.0,
+                lr=60,
+                duration=3,
             )
 
             await asyncio.sleep(0.2)
@@ -33,8 +33,8 @@ class PuppetShow(Show):
         for _ in range(10):
             await swing_move(
                 self.drone,
-                ud=80,
-                duration=3.0,
+                ud=60,
+                duration=3.5,
             )
 
             await asyncio.sleep(0.2)
