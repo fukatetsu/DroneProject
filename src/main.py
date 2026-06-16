@@ -30,6 +30,7 @@ from src.shows.flight.follow_pitch_show import FollowPitchShow
 from src.shows.flight.arc_move_test_show import ArcMoveTestShow
 from src.controllers.drone import DroneController, MockDroneController
 from src.controllers.keyboard import KeyboardController
+from src.shows.camera_viewer import CameraViewer
 from src.analyzers import HoopAnalyzer
 from src.inputs.imu.udp_imu_input import UdpImuInput
 
@@ -86,6 +87,11 @@ async def main() -> None:
         "--mock",
         action="store_true",
         help="Start with MockDroneController instead of a real Tello controller.",
+    )
+    parser.add_argument(
+        "--camera",
+        action="store_true",
+        help="Enable camera viewer to display video stream from drone.",
     )
     args = parser.parse_args()
 
@@ -151,9 +157,22 @@ async def main() -> None:
         controller = KeyboardController(runner.send_command)
         controller.start()
 
+        # Initialize camera viewer if requested
+        camera_viewer = None
+        if args.camera:
+            try:
+                camera_viewer = CameraViewer(drone)
+                camera_viewer.start()
+                print("Camera viewer started.")
+            except ImportError as e:
+                print(f"Camera viewer not available: {e}")
+
         try:
             await runner.run()
         finally:
+            # stop camera viewer
+            if camera_viewer is not None:
+                camera_viewer.stop()
             # stop feeder task and IMU input
             feed_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
