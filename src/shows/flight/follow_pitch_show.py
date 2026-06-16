@@ -32,7 +32,7 @@ class FollowPitchShow(Show):
         self.gain = gain
         self.max_speed = max_speed
 
-        self._analyzer = analyzer
+        self._analyzer: Optional[HoopAnalyzer] = analyzer
         self._running = False
 
     async def start(self) -> None:
@@ -51,6 +51,7 @@ class FollowPitchShow(Show):
         while self._running:
 
             pitch = self._analyzer.state.pitch
+            print(f"Hoop Pitch: {pitch}")
 
             # Pitchローパス
             filtered_pitch = (
