@@ -87,7 +87,7 @@ class KeyboardController:
                 print(f"sent: jump_to_show {show_id}")
                 continue
 
-            if key in {"land"}:
+            if key in {"land","l"}:
                 await self._send_command(KeyboardCommand.LAND.value)
                 print("sent: land")
                 continue

@@ -145,6 +145,8 @@ async def main() -> None:
         def injected_factory(name: str):
             if name == "align_yaw":
                 return AlignYawShow(drone, analyzer=hoop_analyzer)
+            elif name == "follow_pitch":
+                return FollowPitchShow(drone, analyzer=hoop_analyzer)   
             return base_factory(name)
 
         runner = ScenarioRunner(
@@ -152,6 +154,7 @@ async def main() -> None:
             show_factory=injected_factory,
             on_land=drone.land,
             on_emergency=drone.emergency,
+            on_pause=drone.pause,
         )
 
         controller = KeyboardController(runner.send_command)

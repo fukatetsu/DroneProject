@@ -132,6 +132,10 @@ class DroneController(ABC):
     def get_video_frame(self):
         pass
 
+    @abstractmethod
+    def pause(self) -> None:
+        pass
+
     @property
     @abstractmethod
     def state(self) -> DroneState:

@@ -42,11 +42,14 @@ class ScenarioRunner:
         show_factory: ShowFactory,
         on_land: Optional[Callback] = None,
         on_emergency: Optional[Callback] = None,
+        on_pause: Optional[Callback] = None,
+        
     ):
         self.scenario = scenario
         self.show_factory = show_factory
         self.on_land = on_land
         self.on_emergency = on_emergency
+        self.on_pause = on_pause
         self._command_queue: asyncio.Queue[Tuple[str, ScenarioCommandPayload]] = asyncio.Queue()
         self._paused = False
         self._running = False
@@ -127,6 +130,9 @@ class ScenarioRunner:
                     with contextlib.suppress(asyncio.CancelledError):
                         await show_task
                 
+                if self.on_pause is not None:
+                    await self.on_pause()
+
                 # Pause loop: wait only for user commands
                 while self._paused and self._running:
                     command, payload = await self._command_queue.get()
@@ -191,6 +197,9 @@ class ScenarioRunner:
                         timer_task.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await timer_task
+
+                        if self.on_pause is not None:
+                            await self.on_pause()
                         
                         # Pause loop: wait only for user commands
                         while self._paused and self._running:
@@ -238,6 +247,9 @@ class ScenarioRunner:
                     show_task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await show_task
+
+                if self.on_pause is not None:
+                    await self.on_pause()
                 
                 # Pause loop: wait only for user commands
                 while self._paused and self._running:
