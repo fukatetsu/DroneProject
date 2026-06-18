@@ -1,62 +1,62 @@
 {
   "shows": [
     {
-      "id": "takeoff",
+      "id": "TakeoffShow",
       "comment": "離陸",
-      "show": "takeoff",
+      "show": "TakeoffShow",
       "transition": {
         "type": "auto"
       }
     },
     {
-      "id": "move_forward",
+      "id": "MoveForwardShow",
       "comment": "前進（狭い室内用）",
-      "show": "move_forward",
+      "show": "MoveForwardShow",
       "transition": {
         "type": "duration",
         "seconds": 4
       }
     },
     {
-      "id": "rotate_right",
+      "id": "RotateRightShow",
       "comment": "右回転 90°",
-      "show": "rotate_right",
+      "show": "RotateRightShow",
       "transition": {
         "type": "duration",
         "seconds": 4
       }
     },
     {
-      "id": "small_square",
+      "id": "SmallSquareShow",
       "comment": "小さな四角形を描く複合動作",
-      "show": "small_square",
+      "show": "SmallSquareShow",
       "transition": {
         "type": "duration",
         "seconds": 12
       }
     },
     {
-      "id": "flip_forward",
+      "id": "FlipForwardShow",
       "comment": "前方宙返り",
-      "show": "flip_forward",
+      "show": "FlipForwardShow",
       "transition": {
         "type": "duration",
         "seconds": 5
       }
     },
     {
-      "id": "rotate_left",
+      "id": "Rotate180Show",
       "comment": "左回転 180°",
-      "show": "rotate_180",
+      "show": "Rotate180Show",
       "transition": {
         "type": "duration",
         "seconds": 5
       }
     },
     {
-      "id": "landing",
+      "id": "LandingShow",
       "comment": "着陸",
-      "show": "landing",
+      "show": "LandingShow",
       "transition": {
         "type": "duration",
         "seconds": 8

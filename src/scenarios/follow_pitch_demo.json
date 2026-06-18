@@ -1,21 +1,21 @@
 {
     "shows": [
     {
-        "id": "takeoff",
+        "id": "TakeoffShow",
         "comment": "離陸",
-        "show": "takeoff",
+        "show": "TakeoffShow",
         "transition": { "type": "auto" }
     },
     {
-        "id": "follow_pitch",
+        "id": "FollowPitchShow",
         "comment": "ピッチ追従テスト",
-        "show": "follow_pitch",
+        "show": "FollowPitchShow",
         "transition": { "type": "duration", "seconds": 25.0 }
     },
     {
-        "id": "landing",
+        "id": "LandingShow",
         "comment": "着陸",
-        "show": "landing",
+        "show": "LandingShow",
         "transition": { "type": "auto" }
     }
     ]

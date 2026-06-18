@@ -1,21 +1,21 @@
 {
     "shows": [
     {
-        "id": "takeoff",
+        "id": "TakeoffShow",
         "comment": "離陸",
-        "show": "takeoff",
+        "show": "TakeoffShow",
         "transition": { "type": "auto" }
     },
     {
-        "id": "arc_move_test",
+        "id": "ArcMoveTestShow",
         "comment": "アーク移動テスト",
-        "show": "arc_move_test",
+        "show": "ArcMoveTestShow",
         "transition": { "type": "auto" }
     },
     {
-        "id": "landing",
+        "id": "LandingShow",
         "comment": "着陸",
-        "show": "landing",
+        "show": "LandingShow",
         "transition": { "type": "auto" }
     }
     ]
