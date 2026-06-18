@@ -14,20 +14,14 @@ if str(ROOT_DIR) not in sys.path:
 from src.registry import registry
 from src.runtime.scenario import Scenario
 from src.runtime.scenario_runner import ScenarioRunner
-from src.shows.flight.bounce_show import BounceShow
-from src.shows.flight.flip_forward_show import FlipForwardShow
-from src.shows.flight.landing_show import LandingShow
-from src.shows.flight.move_forward_show import MoveForwardShow
-from src.shows.flight.rotate_180_show import Rotate180Show
-from src.shows.flight.rotate_right_show import RotateRightShow
-from src.shows.flight.small_square_show import SmallSquareShow
-from src.shows.flight.takeoff_show import TakeoffShow
-from src.shows.flight.state_monitor_show import StateMonitorShow
+
+import src.shows.flight
+import src.shows.someji
+
+from src.shows.base.show import Show
 from src.shows.flight.align_yaw_show import AlignYawShow
-from src.shows.flight.puppet_move import PuppetShow
-from src.shows.flight.butterfly_escape import ButterflyEscapeShow   
 from src.shows.flight.follow_pitch_show import FollowPitchShow
-from src.shows.flight.arc_move_test_show import ArcMoveTestShow
+
 from src.controllers.drone import DroneController, MockDroneController
 from src.controllers.keyboard import KeyboardController
 from src.shows.camera_viewer import CameraViewer
@@ -41,20 +35,11 @@ except ImportError:  # pragma: no cover
 
 
 def register_builtin_shows() -> None:
-    registry.register("takeoff", lambda drone: TakeoffShow(drone))
-    registry.register("landing", lambda drone: LandingShow(drone))
-    registry.register("move_forward", lambda drone: MoveForwardShow(drone))
-    registry.register("rotate_right", lambda drone: RotateRightShow(drone))
-    registry.register("rotate_180", lambda drone: Rotate180Show(drone))
-    registry.register("flip_forward", lambda drone: FlipForwardShow(drone))
-    registry.register("small_square", lambda drone: SmallSquareShow(drone))
-    registry.register("bounce", lambda drone: BounceShow(drone))
-    registry.register("state_monitor", lambda drone: StateMonitorShow(drone))
-    registry.register("align_yaw", lambda drone: AlignYawShow(drone))
-    registry.register("butterfly_escape", lambda drone: ButterflyEscapeShow(drone))
-    registry.register("follow_pitch", lambda drone: FollowPitchShow(drone))
-    registry.register("puppet_move", lambda drone: PuppetShow(drone))
-    registry.register("arc_move_test", lambda drone: ArcMoveTestShow(drone))
+    for cls in Show.__subclasses__():
+        registry.register(
+            cls.__name__,
+            lambda drone, cls=cls: cls(drone),
+        )
 
 def create_show_factory(drone: DroneController) -> Callable[[str], object]:
     return lambda name: registry.create(name, drone)
@@ -143,9 +128,9 @@ async def main() -> None:
         base_factory = create_show_factory(drone)
 
         def injected_factory(name: str):
-            if name == "align_yaw":
+            if name == "AlignYawShow":
                 return AlignYawShow(drone, analyzer=hoop_analyzer)
-            elif name == "follow_pitch":
+            elif name == "FollowPitchShow":
                 return FollowPitchShow(drone, analyzer=hoop_analyzer)   
             return base_factory(name)
 
