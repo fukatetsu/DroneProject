@@ -249,6 +249,7 @@ class TelloController(DroneController):
                 yaw = await loop.run_in_executor(None, self._tello.get_yaw)
                 pitch = await loop.run_in_executor(None, self._tello.get_pitch)
                 roll = await loop.run_in_executor(None, self._tello.get_roll)
+                height_tof = await loop.run_in_executor(None, self._tello.get_distance_tof)
                 
                 self._state = DroneState(
                     battery=battery,
@@ -259,6 +260,7 @@ class TelloController(DroneController):
                     yaw=yaw,
                     pitch=pitch,
                     roll=roll,
+                    height_tof=height_tof,
                 )
             except Exception:
                 pass
