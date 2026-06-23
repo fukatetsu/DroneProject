@@ -23,7 +23,7 @@ class CircleShow_s(Show):
             lr=20,
             ud = 0,
             yaw=30,
-            duration=15.0,
+            duration=20.0,
         )
 
         

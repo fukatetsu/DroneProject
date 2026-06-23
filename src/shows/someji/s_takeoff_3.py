@@ -6,9 +6,7 @@ from ...controllers.drone import DroneController
 from ..base.show import Show
 
 
-# s2のドローン離陸
-
-class TakeoffShow_s2(Show):
+class TakeoffShow_s3(Show):
     async def start(self) -> None:
         return None
 
@@ -18,7 +16,7 @@ class TakeoffShow_s2(Show):
         print(f"Battery: {self.drone.state.battery}%")
         await asyncio.sleep(2)
 
-        target_height = 150  # cm
+        target_height = 60  # cm
         tolerance = 3       # ±3 cm
 
         while True:
@@ -52,7 +50,8 @@ class TakeoffShow_s2(Show):
 
         self.drone.send_rc_control(0,0,0,0)
         print(f"Target reached: {self.drone.state.height_tof} cm")
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
+        
 
     async def stop(self) -> None:
         return None

@@ -21,6 +21,7 @@ import src.shows.someji
 from src.shows.base.show import Show
 from src.shows.flight.align_yaw_show import AlignYawShow
 from src.shows.flight.follow_pitch_show import FollowPitchShow
+from src.shows.someji.s_followpitch import FollowPitchShow_s
 
 from src.controllers.drone import DroneController, MockDroneController
 from src.controllers.keyboard import KeyboardController
@@ -132,6 +133,8 @@ async def main() -> None:
                 return AlignYawShow(drone, analyzer=hoop_analyzer)
             elif name == "FollowPitchShow":
                 return FollowPitchShow(drone, analyzer=hoop_analyzer)   
+            elif name == "FollowPitchShow_s":
+                return FollowPitchShow_s(drone, analyzer=hoop_analyzer)   
             return base_factory(name)
 
         runner = ScenarioRunner(

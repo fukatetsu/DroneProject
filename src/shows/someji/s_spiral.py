@@ -22,8 +22,8 @@ class SpiralShow_s(Show):
             self.drone,
             lr=0,
             ud = 0,
-            yaw=80,
-            duration=6.0,
+            yaw=100,
+            duration=9.0,
         )
 
         await asyncio.sleep(0.3)
@@ -35,9 +35,10 @@ class SpiralShow_s(Show):
         await arc_move(
             self.drone,
             lr=10,
-            ud=30,
+            ud=40,
             yaw=60,
-            duration=3.0,
+            duration=6.0,
+            target_height=160,
         )
 
         # 下降
@@ -50,7 +51,8 @@ class SpiralShow_s(Show):
             lr=10,
             ud = -30,
             yaw=-60,
-            duration=4.0,
+            duration=12.0,
+            target_height=30,
         )
         
                 # 上昇
@@ -60,9 +62,10 @@ class SpiralShow_s(Show):
         await arc_move(
             self.drone,
             lr=-15,
-            ud=30,
+            ud=80,
             yaw=80,
-            duration=4.0,
+            duration=12.0,
+            target_height=180,
         )
 
         # 下降
@@ -75,7 +78,8 @@ class SpiralShow_s(Show):
             lr=-15,
             ud = -30,
             yaw=-80,
-            duration=4.0,
+            duration=6.0,
+            target_height=60,
         )
 
         # 上昇
@@ -87,7 +91,8 @@ class SpiralShow_s(Show):
             lr=10,
             ud=30,
             yaw=80,
-            duration=3.0,
+            duration=6.0,
+            target_height=110,
         )
         
         self.drone.send_rc_control(
