@@ -50,12 +50,15 @@ async def arc_move(
             current_height = drone.state.height_tof
             error = target_height - current_height
 
-            if abs(error) <= 10:  # ±10 cmの範囲で目標高度に到達とみなす
+            reached = (
+                (ud > 0 and current_height >= target_height)
+                or
+                (ud < 0 and current_height <= target_height)
+            )
+
+            if reached:
                 isHeightReached = True
                 print(f"Target height reached: {current_height} cm")
-            print(
-                f"Height: {current_height} cm "
-            )
 
         #  コマンドの送信
         if target_height is None or (target_height is not None and  not isHeightReached):

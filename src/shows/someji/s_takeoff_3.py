@@ -16,7 +16,7 @@ class TakeoffShow_s3(Show):
         print(f"Battery: {self.drone.state.battery}%")
         await asyncio.sleep(2)
 
-        target_height = 60  # cm
+        target_height = 90  # cm
         tolerance = 3       # ±3 cm
 
         while True:

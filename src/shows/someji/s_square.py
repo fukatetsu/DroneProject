@@ -14,30 +14,174 @@ class SquareShow_s(Show):
         return None
 
     async def run(self) -> None:
-        await self.drone.go_xyz_speed(0,80,0,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,-80,0,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,80,60,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,-80,-30,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,80,-30,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,-80,20,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,40,60,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,-40,-80,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,-80,80,95)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,0,-80,90)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,80,80,75)
-        await asyncio.sleep(0.05)
-        await self.drone.go_xyz_speed(0,0,-80,90)
-        await asyncio.sleep(0.05)
+        # 最初の左移動
+        self.drone.send_rc_control(-60, 0, 0, 0)
+        await asyncio.sleep(0.8)
+
+        # ±10ブレーキを5周期
+        for _ in range(5):
+            self.drone.send_rc_control(10, 0, 0, 0)
+            await asyncio.sleep(0.15)
+
+            self.drone.send_rc_control(60, 0, 0, 0)
+            await asyncio.sleep(1.4)
+
+            self.drone.send_rc_control(-10, 0, 0, 0)
+            await asyncio.sleep(0.15)
+
+            self.drone.send_rc_control(-60, 0, 0, 0)
+            await asyncio.sleep(1.4)
+        
+
+        # 右へ大きく移動
+        self.drone.send_rc_control(45, 0, 0, 0)
+        await asyncio.sleep(2.6)
+
+        # 横方向の慣性を消す
+        self.drone.send_rc_control(-25, 0, 0, 0)
+        await asyncio.sleep(0.25)
+
+        # 一瞬止める
+        self.drone.send_rc_control(0, 0, 0, 0)
+        await asyncio.sleep(0.2)
+
+        # 上昇
+        self.drone.send_rc_control(0, 0, 40, 0)
+        await asyncio.sleep(1.2)
+
+        # 上昇慣性を消す
+        self.drone.send_rc_control(0, 0, -20, 0)
+        await asyncio.sleep(0.15)
+
+        # ====================
+        # 左移動しながら大きく上下
+        # ====================
+
+        self.drone.send_rc_control(-35, 0, -45, 0)
+        await asyncio.sleep(0.8)
+
+        # 弱めの反転
+        self.drone.send_rc_control(8, 0, 25, 0)
+        await asyncio.sleep(0.15)
+
+        self.drone.send_rc_control(-35, 0, 45, 0)
+        await asyncio.sleep(0.8)
+
+        # 弱めの反転
+        self.drone.send_rc_control(8, 0, -25, 0)
+        await asyncio.sleep(0.15)
+
+        self.drone.send_rc_control(-35, 0, -45, 0)
+        await asyncio.sleep(0.8)
+
+        # 次の動作へ移るため少し整える
+        self.drone.send_rc_control(20, 0, 20, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(0, 0, 0, 0)
+        await asyncio.sleep(0.9)
+
+        # ====================
+        # ひし形
+        # ====================
+
+        self.drone.send_rc_control(-50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(-50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(0, 0, 0, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, -30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        # 最後に右へ抜ける
+        self.drone.send_rc_control(35, 0, 0, 0)
+        await asyncio.sleep(1.0)
+
+        # ====================
+        # ひし形
+        # ====================
+
+        self.drone.send_rc_control(-50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(-50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(0, 0, 0, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, -30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        # 最後に右へ抜ける
+        self.drone.send_rc_control(35, 0, 0, 0)
+        await asyncio.sleep(1.0)
+
+        # ====================
+        # ひし形
+        # ====================
+
+        self.drone.send_rc_control(-50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(-50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(0, 0, 0, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, 55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, -30, 0)
+        await asyncio.sleep(0.20)
+
+        self.drone.send_rc_control(50, 0, -55, 0)
+        await asyncio.sleep(0.9)
+
+        self.drone.send_rc_control(-20, 0, 30, 0)
+        await asyncio.sleep(0.20)
+
+        # 最後に右へ抜ける
+        self.drone.send_rc_control(35, 0, 0, 0)
+        await asyncio.sleep(1.0)
+
+        # 最終停止
+        self.drone.send_rc_control(-20, 0, 0, 0)
+        await asyncio.sleep(0.15)
+
+        self.drone.send_rc_control(0, 0, 0, 0)
 
 
     async def stop(self) -> None:
