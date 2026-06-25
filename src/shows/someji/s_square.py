@@ -14,22 +14,24 @@ class SquareShow_s(Show):
         return None
 
     async def run(self) -> None:
-        # 最初の左移動
         self.drone.send_rc_control(-60, 0, 0, 0)
         await asyncio.sleep(0.8)
 
-        # ±10ブレーキを5周期
         for _ in range(5):
-            self.drone.send_rc_control(10, 0, 0, 0)
+            fb = max(-8, min(8, int(-0.3 * self.drone.state.speed_y)))
+            self.drone.send_rc_control(10, fb, 0, 0)
             await asyncio.sleep(0.15)
 
-            self.drone.send_rc_control(60, 0, 0, 0)
+            fb = max(-8, min(8, int(-0.3 * self.drone.state.speed_y)))
+            self.drone.send_rc_control(60, fb, 0, 0)
             await asyncio.sleep(1.4)
 
-            self.drone.send_rc_control(-10, 0, 0, 0)
+            fb = max(-8, min(8, int(-0.3 * self.drone.state.speed_y)))
+            self.drone.send_rc_control(-10, fb, 0, 0)
             await asyncio.sleep(0.15)
 
-            self.drone.send_rc_control(-60, 0, 0, 0)
+            fb = max(-8, min(8, int(-0.3 * self.drone.state.speed_y)))
+            self.drone.send_rc_control(-60, fb, 0, 0)
             await asyncio.sleep(1.4)
         
 
