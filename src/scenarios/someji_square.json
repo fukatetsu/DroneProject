@@ -7,9 +7,9 @@
         "transition": { "type": "auto" }
     },
     {
-        "id": "SquareShow_s",
+        "id": "SquareShow_s2",
         "comment": "正方形",
-        "show": "SquareShow_s",
+        "show": "SquareShow_s2",
         "transition": { "type": "auto" }
     },
 

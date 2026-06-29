@@ -56,7 +56,7 @@ class KeyboardController:
             key = parts[0].lower()
 
             # Map simple keywords to commands
-            if key in {"p", "pause"}:
+            if key in {"p", "pause", "pp"}:
                 await self._send_command(KeyboardCommand.PAUSE.value)
                 print("sent: pause")
                 continue
