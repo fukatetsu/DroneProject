@@ -8,7 +8,7 @@ from ...controllers.drone import DroneController
 from ...analyzers import HoopAnalyzer
 from ..base.show import Show
 
-from ..motions.height_control import calc_height_vz
+from ..motions.height_control import adjust_height, calc_height_vz
 
 
 class FollowPitchShow_s(Show):
@@ -137,6 +137,7 @@ class FollowPitchShow_s(Show):
         x: int = 0,
         y: int = 0,
         yaw: int = 0,
+        max_speed: int = 0
     ) -> tuple[float, float]:
         """
         Hoop Pitchを目標高度へ変換し、
@@ -199,6 +200,8 @@ class FollowPitchShow_s(Show):
             )
         """
 
+        max_speed = (self.max_speed if max_speed == None else max_speed)
+
         start_time = time.monotonic()
 
         while (
@@ -228,7 +231,7 @@ class FollowPitchShow_s(Show):
                 drone=self.drone,
                 target_height=target_height,
                 gain=height_gain,
-                max_speed=self.max_speed,
+                max_speed=max_speed,
             )
 
             filtered_vz = (
@@ -303,18 +306,28 @@ class FollowPitchShow_s(Show):
                 pitch_min=-90,
                 pitch_max=90,
                 height_min=30,
-                height_max=180,
+                height_max=200,
+                yaw = 20,
+                y = 5,
+                max_speed=100
             )
         )
 
-        # 1回目
-        filtered_pitch, filtered_speed = (
-            await self._follow_pitch_for_y_speed(
-                15,
-                filtered_pitch,
-                filtered_speed,
+        filtered_pitch, filtered_vz = (
+            await self._follow_pitch_for_height(
+                duration_sec=20,
+                filtered_pitch=filtered_pitch,
+                filtered_vz=filtered_vz,
+                pitch_min=-90,
+                pitch_max=90,
+                height_min=30,
+                height_max=200,
+                yaw = -20,
+                y = -5,
+                max_speed=100
             )
         )
+
         self.drone.send_rc_control(
                 0,          # lr
                 0,   # fb
@@ -322,16 +335,54 @@ class FollowPitchShow_s(Show):
                 0         # yaw
         )
 
+        await adjust_height(self.drone, target_height=90)
+        # asyncio.sleep(4)
+
+        # # 1回目
+        # filtered_pitch, filtered_speed = (
+        #     await self._follow_pitch_for_y_speed(
+        #         20,
+        #         filtered_pitch,
+        #         filtered_speed,
+        #         yaw = 20,
+
+        #     )
+        # )
+        # self.drone.send_rc_control(
+        #         0,          # lr
+        #         0,   # fb
+        #         0,          # ud
+        #         0         # yaw
+        # )
+
 
 
         # # 2回目
         # filtered_pitch, filtered_speed = (
         #     await self._follow_pitch_for_y_speed(
-        #         15,
+        #         20,
         #         filtered_pitch,
         #         filtered_speed,
+        #         yaw = -20,
         #     )
         # )
+        # filtered_pitch, filtered_speed = (
+        #     await self._follow_pitch_for_y_speed(
+        #         5,
+        #         filtered_pitch,
+        #         filtered_speed,
+        #         yaw = 0,
+        #     )
+        # )
+
+        self.drone.send_rc_control(
+                0,          # lr
+                0,   # fb
+                0,          # ud
+                0         # yaw
+        )
+
+        await asyncio.sleep(2)
 
         # self.drone.send_rc_control(
         #         0,          # lr

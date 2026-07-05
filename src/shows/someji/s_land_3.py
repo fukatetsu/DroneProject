@@ -5,12 +5,13 @@ import asyncio
 from ...controllers.drone import DroneController
 from ..base.show import Show
 
-#s2のドローン着陸
+#s3のドローン着陸
 class LandingShow_s3(Show):
     async def start(self) -> None:
         return None
 
     async def run(self) -> None:
+        print(f"Battery: {self.drone.state.battery}%")
         await self.drone.land()
         await asyncio.sleep(5.0)
 

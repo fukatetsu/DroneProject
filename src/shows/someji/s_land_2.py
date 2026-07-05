@@ -11,6 +11,7 @@ class LandingShow_s2(Show):
         return None
 
     async def run(self) -> None:
+        print(f"Battery: {self.drone.state.battery}%")
         await self.drone.land()
         await asyncio.sleep(5.0)
 

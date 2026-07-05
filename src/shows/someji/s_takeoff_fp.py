@@ -6,16 +6,20 @@ from ...controllers.drone import DroneController
 from ..base.show import Show
 
 
-#s1のドローン着陸
+# 演技開始時のドローン離陸
 
-class LandingShow_s1(Show):
+class TakeoffShow_sfp(Show):
     async def start(self) -> None:
         return None
 
     async def run(self) -> None:
+        await asyncio.sleep(5)
+
+        await self.drone.takeoff()
+        self.drone.send_rc_control(0,0,0,0)
+        await asyncio.sleep(1)
         print(f"Battery: {self.drone.state.battery}%")
-        await self.drone.land()
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(0.5)
 
     async def stop(self) -> None:
-        self.drone.send_rc_control(0, 0, 0, 0)
+        return None
