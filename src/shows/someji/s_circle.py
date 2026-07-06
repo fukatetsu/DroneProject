@@ -23,7 +23,55 @@ class CircleShow_s(Show):
             lr=20,
             ud = 0,
             yaw=30,
-            duration=20.0,
+            duration=6.0,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = 80,
+            yaw=30,
+            duration=0.5,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = 0,
+            yaw=30,
+            duration=3.0,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = 80,
+            yaw=30,
+            duration=0.5,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = 0,
+            yaw=30,
+            duration=3.0,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = -80,
+            yaw=30,
+            duration=1.0,
+        )
+        # 右旋回
+        await arc_move(
+            self.drone,
+            lr=20,
+            ud = 0,
+            yaw=30,
+            duration=3.0,
         )
 
         

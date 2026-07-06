@@ -300,21 +300,6 @@ class FollowPitchShow_s(Show):
 
         filtered_pitch, filtered_vz = (
             await self._follow_pitch_for_height(
-                duration_sec=15,
-                filtered_pitch=filtered_pitch,
-                filtered_vz=filtered_vz,
-                pitch_min=-90,
-                pitch_max=90,
-                height_min=30,
-                height_max=200,
-                yaw = 20,
-                y = 5,
-                max_speed=100
-            )
-        )
-
-        filtered_pitch, filtered_vz = (
-            await self._follow_pitch_for_height(
                 duration_sec=20,
                 filtered_pitch=filtered_pitch,
                 filtered_vz=filtered_vz,
@@ -322,8 +307,61 @@ class FollowPitchShow_s(Show):
                 pitch_max=90,
                 height_min=30,
                 height_max=200,
-                yaw = -20,
-                y = -5,
+                yaw = 0,
+                y = 0,
+                max_speed=100
+            )
+        )
+        self.drone.send_rc_control(0, -60, 0, 0)
+        await asyncio.sleep(0.7)
+
+        filtered_pitch, filtered_vz = (
+            await self._follow_pitch_for_height(
+                duration_sec=8,
+                filtered_pitch=filtered_pitch,
+                filtered_vz=filtered_vz,
+                pitch_min=-90,
+                pitch_max=90,
+                height_min=30,
+                height_max=200,
+                yaw = 0,
+                x = 15,
+                max_speed=100
+            )
+        )
+
+        self.drone.send_rc_control(0, -60, 0, 0)
+        await asyncio.sleep(0.7)
+
+        filtered_pitch, filtered_vz = (
+            await self._follow_pitch_for_height(
+                duration_sec=8,
+                filtered_pitch=filtered_pitch,
+                filtered_vz=filtered_vz,
+                pitch_min=-90,
+                pitch_max=90,
+                height_min=30,
+                height_max=200,
+                yaw = 0,
+                x = -15,
+                max_speed=100
+            )
+        )
+
+        self.drone.send_rc_control(0, 80, 0, 0)
+        await asyncio.sleep(0.7)
+
+        filtered_pitch, filtered_vz = (
+            await self._follow_pitch_for_height(
+                duration_sec=8,
+                filtered_pitch=filtered_pitch,
+                filtered_vz=filtered_vz,
+                pitch_min=-90,
+                pitch_max=90,
+                height_min=30,
+                height_max=200,
+                yaw = 80,
+                x = 0,
                 max_speed=100
             )
         )
@@ -335,7 +373,7 @@ class FollowPitchShow_s(Show):
                 0         # yaw
         )
 
-        await adjust_height(self.drone, target_height=90)
+        await adjust_height(self.drone, target_height=180, yaw = 60)
         # asyncio.sleep(4)
 
         # # 1回目

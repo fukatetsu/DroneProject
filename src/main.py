@@ -137,7 +137,7 @@ async def main() -> None:
             elif name == "FollowPitchShow_s":
                 return FollowPitchShow_s(drone, analyzer=hoop_analyzer)   
             elif name =="AlignYawShow_s":
-                return AlignYawShow_s
+                return AlignYawShow_s(drone, analyzer=hoop_analyzer)
             return base_factory(name)
 
         runner = ScenarioRunner(

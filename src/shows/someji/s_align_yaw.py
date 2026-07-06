@@ -5,6 +5,8 @@ import math
 import time
 from typing import Optional
 
+from src.shows.motions.height_control import adjust_height
+
 from ...controllers.drone import DroneController
 from ...analyzers import HoopAnalyzer
 from ..base.show import Show
@@ -32,7 +34,7 @@ class AlignYawShow_s(Show):
         duration_seconds: float = 10.0,
         poll_interval: float = 0.1,
         yaw_tolerance_deg: float = 5.0,
-        max_yaw_speed: int = 80,
+        max_yaw_speed: int = 100,
         gain: float = 10.0,
         analyzer: Optional[HoopAnalyzer] = None,
     ) -> None:
@@ -138,17 +140,21 @@ class AlignYawShow_s(Show):
         # HoopAnalyzer instance (it will produce default state until updated).
         if self._analyzer is None:
             self._analyzer = HoopAnalyzer()
+        self._running = True
 
     async def run(self) -> None:
         if self._analyzer is None:
             raise RuntimeError("AlignYawShow not started")
-        await self.follow_roll_for(10.0)
-        await self.follow_roll_for(fb_speed=-15, duration_sec=10.0)
-        await self.follow_roll_for(fb_speed=15, duration_sec=10.0)
-        await self.follow_roll_for(fb_speed=15, duration_sec=5.0, z_speed=10)
-        await self.follow_roll_for(fb_speed=15, duration_sec=5.0, z_speed=-10)
-        await self.follow_roll_for(fb_speed=15, duration_sec=5.0, z_speed=10)
         await self.follow_roll_for(fb_speed=0, duration_sec=7.0, z_speed=-10)
+
+        await self.follow_roll_for(fb_speed=24, duration_sec=10.0)
+        await self.follow_roll_for(fb_speed=24, duration_sec=10.0)
+        await self.follow_roll_for(fb_speed=24, duration_sec=5.0, z_speed=25)
+        await self.follow_roll_for(fb_speed=24, duration_sec=5.0, z_speed=-20)
+        await self.follow_roll_for(fb_speed=24, duration_sec=5.0, z_speed=15)
+        await self.follow_roll_for(fb_speed=12, duration_sec=7.0, z_speed=0)
+        await adjust_height(self.drone, target_height=180, yaw = 100)
+
 
 
 

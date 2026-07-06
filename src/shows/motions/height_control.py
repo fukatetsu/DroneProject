@@ -8,6 +8,9 @@ async def adjust_height(
     gain: float = 3.0,
     max_speed: int = 40,
     interval: float = 0.1,
+    x:int = 0,
+    y:int = 0,
+    yaw:int = 0,
 ) -> None:
     """
     TOFセンサを用いて指定高度まで移動する。
@@ -37,10 +40,10 @@ async def adjust_height(
         vz = max(-max_speed, min(max_speed, vz))
 
         drone.send_rc_control(
-            0,
-            0,
+            x,
+            y,
             vz,
-            0,
+            yaw,
         )
 
         await asyncio.sleep(interval)

@@ -1,9 +1,9 @@
 {
     "shows": [
     {
-        "id": "TakeoffShow_s1",
+        "id": "TakeoffShow_sfp",
         "comment": "離陸",
-        "show": "TakeoffShow_s1",
+        "show": "TakeoffShow_sfp",
         "transition": { "type": "auto" }
     },
     {
@@ -20,9 +20,9 @@
     },
 
     {
-        "id": "LandingShow_s1",
+        "id": "LandingShow_s4",
         "comment": "着陸",
-        "show": "LandingShow_s1",
+        "show": "LandingShow_s4",
         "transition": { "type": "auto" }
     }
     ]

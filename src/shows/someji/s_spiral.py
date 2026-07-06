@@ -22,7 +22,7 @@ class SpiralShow_s(Show):
             self.drone,
             lr=0,
             ud = 0,
-            yaw=60,
+            yaw=80,
             duration=9.0,
         )
 
