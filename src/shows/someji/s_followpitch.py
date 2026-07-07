@@ -330,7 +330,7 @@ class FollowPitchShow_s(Show):
             )
         )
 
-        self.drone.send_rc_control(0, -60, 0, 0)
+        self.drone.send_rc_control(0, 60, 0, 0)
         await asyncio.sleep(0.7)
 
         filtered_pitch, filtered_vz = (
@@ -348,7 +348,7 @@ class FollowPitchShow_s(Show):
             )
         )
 
-        self.drone.send_rc_control(0, 80, 0, 0)
+        self.drone.send_rc_control(0, -60, 0, 0)
         await asyncio.sleep(0.7)
 
         filtered_pitch, filtered_vz = (

@@ -20,9 +20,9 @@
         "transition": { "type": "auto" }
     },
     {
-        "id": "TakeoffShow_sfp",
+        "id": "TakeoffShow_s2",
         "comment": "離陸",
-        "show": "TakeoffShow_sfp",
+        "show": "TakeoffShow_s2",
         "transition": { "type": "auto" }
     },
     {

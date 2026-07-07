@@ -13,6 +13,7 @@ class TakeoffShow_sfp(Show):
         return None
 
     async def run(self) -> None:
+        await asyncio.sleep(5)
         await self.drone.takeoff()
         self.drone.send_rc_control(0,0,0,0)
         await asyncio.sleep(1)

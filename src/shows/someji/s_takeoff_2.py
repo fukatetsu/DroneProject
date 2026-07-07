@@ -13,12 +13,14 @@ class TakeoffShow_s2(Show):
         return None
 
     async def run(self) -> None:
+        await asyncio.sleep(5)
+
         await self.drone.takeoff()
         self.drone.send_rc_control(0,0,0,0)
         print(f"Battery: {self.drone.state.battery}%")
         await asyncio.sleep(2)
 
-        target_height = 150  # cm
+        target_height = 70  # cm
         tolerance = 3       # ±3 cm
 
         while True:
