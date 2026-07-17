@@ -162,6 +162,13 @@ class TelloController(DroneController):
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, self._tello.curve_xyz_speed, x1, y1, z1, x2, y2, z2, speed)
 
+    async def pause(self) -> None:
+        async with self._command_lock:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._tello.send_rc_control, 0, 0, 0, 0)
+
+    
+
     def send_rc_control(
         self,
         left_right: int,
@@ -242,6 +249,7 @@ class TelloController(DroneController):
                 yaw = await loop.run_in_executor(None, self._tello.get_yaw)
                 pitch = await loop.run_in_executor(None, self._tello.get_pitch)
                 roll = await loop.run_in_executor(None, self._tello.get_roll)
+                height_tof = await loop.run_in_executor(None, self._tello.get_distance_tof)
                 
                 self._state = DroneState(
                     battery=battery,
@@ -252,6 +260,7 @@ class TelloController(DroneController):
                     yaw=yaw,
                     pitch=pitch,
                     roll=roll,
+                    height_tof=height_tof,
                 )
             except Exception:
                 pass

@@ -1,0 +1,16 @@
+{
+    "shows": [
+        {
+        "id": "HeightTakeoffShow",
+        "comment": "離陸",
+        "show": "HeightTakeoffShow",
+        "transition": { "type": "auto" }
+        },
+        {
+        "id": "LandingShow",
+        "comment": "着陸",
+        "show": "LandingShow",
+        "transition": { "type": "auto" }
+        }
+    ]
+}

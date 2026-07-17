@@ -56,7 +56,7 @@ class KeyboardController:
             key = parts[0].lower()
 
             # Map simple keywords to commands
-            if key in {"p", "pause"}:
+            if key in {"p", "pause", "pp"}:
                 await self._send_command(KeyboardCommand.PAUSE.value)
                 print("sent: pause")
                 continue
@@ -87,7 +87,7 @@ class KeyboardController:
                 print(f"sent: jump_to_show {show_id}")
                 continue
 
-            if key in {"land"}:
+            if key in {"land","l"}:
                 await self._send_command(KeyboardCommand.LAND.value)
                 print("sent: land")
                 continue

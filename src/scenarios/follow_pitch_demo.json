@@ -7,10 +7,10 @@
         "transition": { "type": "auto" }
     },
     {
-        "id": "ArcMoveTestShow",
-        "comment": "アーク移動テスト",
-        "show": "ArcMoveTestShow",
-        "transition": { "type": "auto" }
+        "id": "FollowPitchShow",
+        "comment": "ピッチ追従テスト",
+        "show": "FollowPitchShow",
+        "transition": { "type": "duration", "seconds": 25.0 }
     },
     {
         "id": "LandingShow",

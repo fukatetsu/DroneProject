@@ -1,0 +1,29 @@
+{
+    "shows": [
+    {
+        "id": "TakeoffShow_sfp",
+        "comment": "離陸",
+        "show": "TakeoffShow_sfp",
+        "transition": { "type": "auto" }
+    },
+    {
+        "id": "CircleShow_s",
+        "comment": "円",
+        "show": "CircleShow_s",
+        "transition": { "type": "auto" }
+    },
+    {
+        "id": "AlignYawShow_s",
+        "comment": "ヨー調整",
+        "show": "AlignYawShow_s",
+        "transition": { "type": "auto" }
+    },
+
+    {
+        "id": "LandingShow_s4",
+        "comment": "着陸",
+        "show": "LandingShow_s4",
+        "transition": { "type": "auto" }
+    }
+    ]
+}

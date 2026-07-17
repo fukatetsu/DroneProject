@@ -1,21 +1,21 @@
 {
     "shows": [
     {
-        "id": "TakeoffShow",
+        "id": "TakeoffShow_s1",
         "comment": "離陸",
-        "show": "TakeoffShow",
+        "show": "TakeoffShow_s1",
         "transition": { "type": "auto" }
     },
     {
-        "id": "ArcMoveTestShow",
-        "comment": "アーク移動テスト",
-        "show": "ArcMoveTestShow",
+        "id": "KidsDemo_s",
+        "comment": "子供向けデモ",
+        "show": "KidsDemo_s",
         "transition": { "type": "auto" }
     },
     {
-        "id": "LandingShow",
+        "id": "LandingShow_s1",
         "comment": "着陸",
-        "show": "LandingShow",
+        "show": "LandingShow_s1",
         "transition": { "type": "auto" }
     }
     ]

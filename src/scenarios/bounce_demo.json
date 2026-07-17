@@ -1,25 +1,25 @@
 {
   "shows": [
     {
-      "id": "takeoff",
+      "id": "TakeoffShow",
       "comment": "離陸",
-      "show": "takeoff",
+      "show": "TakeoffShow",
       "transition": {
         "type": "auto"
       }
     },
     {
-      "id": "bounce",
+      "id": "BounceShow",
       "comment": "高さ100cmまで移動後，跳ねるような上下運動を実行",
-      "show": "bounce",
+      "show": "BounceShow",
       "transition": {
         "type": "auto"
       }
     },
     {
-      "id": "landing",
+      "id": "LandingShow",
       "comment": "着陸",
-      "show": "landing",
+      "show": "LandingShow",
       "transition": {
         "type": "auto"
       }

@@ -1,0 +1,22 @@
+{
+    "shows": [
+    {
+        "id": "TakeoffShow_s4",
+        "comment": "離陸",
+        "show": "TakeoffShow_s4",
+        "transition": { "type": "auto" }
+    },
+    {
+        "id": "FollowPitchShow_s",
+        "comment": "正方形",
+        "show": "FollowPitchShow_s",
+        "transition": { "type": "auto" }
+    },
+
+    {
+        "id": "LandingShow_s4",
+        "comment": "着陸",
+        "show": "LandingShow_s4",
+        "transition": { "type": "auto" }
+    }]
+}

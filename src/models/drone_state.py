@@ -13,3 +13,4 @@ class DroneState:
     yaw: int = 0
     pitch: int = 0
     roll: int = 0
+    height_tof: int = 0

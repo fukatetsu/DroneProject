@@ -1,21 +1,21 @@
 {
   "shows": [
     {
-      "id": "takeoff",
+      "id": "TakeoffShow",
       "comment": "離陸",
-      "show": "takeoff",
+      "show": "TakeoffShow",
       "transition": { "type": "auto" }
     },
     {
-      "id": "align_yaw",
+      "id": "AlignYawShow",
       "comment": "ヨー調整ショー",
-      "show": "align_yaw",
+      "show": "AlignYawShow",
       "transition": { "type": "duration", "seconds": 60 }
     },
     {
-      "id": "landing",
+      "id": "LandingShow",
       "comment": "着陸",
-      "show": "landing",
+      "show": "LandingShow",
       "transition": { "type": "duration", "seconds": 6 }
     }
   ]

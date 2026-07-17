@@ -138,6 +138,10 @@ class MockDroneController(DroneController):
                 f"[MockDroneController] curve_xyz_speed({x1}, {y1}, {z1}, {x2}, {y2}, {z2}, {speed})"
             )
 
+    async def pause(self) -> None:
+        async with self._command_lock:
+            print("[MockDroneController] pause  send_rc_control(0, 0, 0, 0)")
+
     async def _simulate_state(self) -> None:
         try:
             while self._connected:
