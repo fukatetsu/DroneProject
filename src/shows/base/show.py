@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from ...controllers.drone import DroneController
+from ...output import MediaController
 
 
 class Show(ABC):
@@ -14,8 +15,10 @@ class Show(ABC):
         if cls is not Show:
             Show.registry[cls.__name__] = cls
     
-    def __init__(self, drone: DroneController) -> None:
+    def __init__(self, drone: DroneController, enable_output: bool = False) -> None:
         self.drone = drone
+        self._enable_output = enable_output
+        self.media = MediaController(drone, enabled=enable_output)
 
     @abstractmethod
     async def start(self) -> None:
@@ -28,6 +31,10 @@ class Show(ABC):
     @abstractmethod
     async def stop(self) -> None:
         pass
+
+    def set_output_enabled(self, enabled: bool) -> None:
+        self._enable_output = enabled
+        self.media.set_enabled(enabled)
 
     async def pause(self) -> None:
         self.drone.send_rc_control(

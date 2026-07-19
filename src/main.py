@@ -27,7 +27,7 @@ from src.shows.someji.s_kids_demo import KidsDemo_s
 
 from src.controllers.drone import DroneController, MockDroneController
 from src.controllers.keyboard import KeyboardController
-from src.shows.camera_viewer import CameraViewer
+from src.output.camera_viewer import CameraViewer
 from src.analyzers import HoopAnalyzer
 from src.inputs.imu.udp_imu_input import UdpImuInput
 
@@ -37,15 +37,24 @@ except ImportError:  # pragma: no cover
     TelloController = None
 
 
-def register_builtin_shows() -> None:
+def register_builtin_shows(enable_output: bool = False) -> None:
     for cls in Show.__subclasses__():
-        registry.register(
-            cls.__name__,
-            lambda drone, cls=cls: cls(drone),
-        )
+        def _factory(drone: DroneController, cls: type[Show] = cls, enabled: bool = enable_output):
+            show_enabled = enabled or cls.__name__ == "DemoMediaShow"
+            show = cls(drone, enable_output=show_enabled)
+            if hasattr(show, "set_output_enabled"):
+                show.set_output_enabled(show_enabled)
+            return show
 
-def create_show_factory(drone: DroneController) -> Callable[[str], object]:
-    return lambda name: registry.create(name, drone)
+        registry.register(cls.__name__, _factory)
+
+def create_show_factory(drone: DroneController, enable_output: bool = False) -> Callable[[str], object]:
+    def _factory(name: str):
+        show = registry.create(name, drone)
+        if hasattr(show, "set_output_enabled"):
+            show.set_output_enabled(enable_output or name == "DemoMediaShow")
+        return show
+    return _factory
 
 
 def create_drone(use_mock: bool = False) -> DroneController:
@@ -83,7 +92,7 @@ async def main() -> None:
     )
     args = parser.parse_args()
 
-    register_builtin_shows()
+    register_builtin_shows(enable_output=args.camera)
     scenario = Scenario.load_from_file(args.scenario)
     drone = create_drone(use_mock=args.mock)
 
@@ -128,7 +137,7 @@ async def main() -> None:
         feed_task = asyncio.create_task(_feed_analyzer())
 
         # Wrap show factory to inject the HoopAnalyzer into AlignYawShow explicitly.
-        base_factory = create_show_factory(drone)
+        base_factory = create_show_factory(drone, enable_output=args.camera)
 
         def injected_factory(name: str):
             if name == "AlignYawShow":
