@@ -17,8 +17,8 @@ class DemoMediaShow(Show):
     async def start(self) -> None:
         self._running = True
         await self.media.enable_camera()
-        self.media.set_window(monitor=0, x=0, y=0, width=1280, height=720)
-        self.media.show_image("title.png")
+        # self.media.set_fullscreen(True)
+        # self.media.set_window(monitor=0, x=0, y=0, width=1280, height=720)
         self.media.play_bgm("demo.m4a")
 
     async def run(self) -> None:
@@ -26,11 +26,13 @@ class DemoMediaShow(Show):
             raise RuntimeError("DemoMediaShow not started")
 
         self.media.show_camera()
+        await asyncio.sleep(5)
+        self.media.disable_camera()
         self.media.play_se("demo.m4a")
-        await asyncio.sleep(2)
         self.media.play_video("demo.MOV")
         await asyncio.sleep(5)
         self.media.show_image("title.png")
+        await asyncio.sleep(3)
         self.media.show_black()
 
     async def stop(self) -> None:

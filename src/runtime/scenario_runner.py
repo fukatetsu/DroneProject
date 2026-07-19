@@ -94,6 +94,7 @@ class ScenarioRunner:
             action = await self._execute_show(step)
         finally:
             await self.current_show.stop()
+            await self.current_show.media.shutdown()
             self.current_show = None
 
         return action
