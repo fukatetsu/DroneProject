@@ -40,7 +40,7 @@ except ImportError:  # pragma: no cover
 def register_builtin_shows(enable_output: bool = False) -> None:
     for cls in Show.__subclasses__():
         def _factory(drone: DroneController, cls: type[Show] = cls, enabled: bool = enable_output):
-            show_enabled = enabled or cls.__name__ == "DemoMediaShow"
+            show_enabled = enabled or cls.use_media_output
             show = cls(drone, enable_output=show_enabled)
             if hasattr(show, "set_output_enabled"):
                 show.set_output_enabled(show_enabled)
@@ -52,7 +52,9 @@ def create_show_factory(drone: DroneController, enable_output: bool = False) -> 
     def _factory(name: str):
         show = registry.create(name, drone)
         if hasattr(show, "set_output_enabled"):
-            show.set_output_enabled(enable_output or name == "DemoMediaShow")
+            show.set_output_enabled(
+                enable_output or show.use_media_output
+            )
         return show
     return _factory
 

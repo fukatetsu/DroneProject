@@ -8,6 +8,8 @@ from ..base.show import Show
 
 class DemoMediaShow(Show):
     """Demo show that exercises the media controller via the show lifecycle."""
+    use_media_output = True
+
 
     def __init__(self, drone: DroneController, enable_output: bool | None = None) -> None:
         resolved_enable_output = True if enable_output is None else enable_output
@@ -27,7 +29,6 @@ class DemoMediaShow(Show):
 
         self.media.show_camera()
         await asyncio.sleep(5)
-        self.media.disable_camera()
         self.media.play_se("demo.m4a")
         self.media.play_video("demo.MOV")
         await asyncio.sleep(5)
