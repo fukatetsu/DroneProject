@@ -4,7 +4,9 @@ import asyncio
 import inspect
 from pathlib import Path
 import time
+import pygame
 from typing import Any, Callable, Optional
+from screeninfo import get_monitors
 
 try:
     import cv2
@@ -68,6 +70,11 @@ class MediaController:
         self._se_volume = 100
 
         self._root_dir = self._resolve_project_root()
+
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        self._se_sounds: list[pygame.mixer.Sound] = []
 
 
     # =====================================================
@@ -398,31 +405,54 @@ class MediaController:
 
     def set_window(
         self,
-        monitor: int,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
+        monitor: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
     ) -> None:
 
         if not self._enabled:
             return
 
-        del monitor
-
         self._ensure_window()
 
-        cv2.resizeWindow(
-            self._window_title,
-            width,
-            height,
-        )
+        # モニタ位置を取得
+        if monitor is not None:
+            monitors = get_monitors()
 
-        cv2.moveWindow(
-            self._window_title,
-            x,
-            y,
-        )
+            if not (0 <= monitor < len(monitors)):
+                raise ValueError(
+                    f"Invalid monitor index: {monitor}"
+                )
+
+            m = monitors[monitor]
+
+            if x is None:
+                x = m.x
+
+            if y is None:
+                y = m.y
+
+            if width is None:
+                width = m.width
+
+            if height is None:
+                height = m.height
+
+        if width is not None and height is not None:
+            cv2.resizeWindow(
+                self._window_title,
+                width,
+                height,
+            )
+
+        if x is not None and y is not None:
+            cv2.moveWindow(
+                self._window_title,
+                x,
+                y,
+            )
 
 
 
@@ -485,59 +515,144 @@ class MediaController:
         self,
         path: str,
         loop: bool = False,
-        on_finished=None,
-    ):
-        del path, loop
+        on_finished: Optional[Callable[[], None]] = None,
+    ) -> None:
 
-        if on_finished:
-            self._invoke_callback(
-                on_finished
-            )
+        if not self._enabled:
+            self._invoke_callback(on_finished)
+            return
+
+        resolved = self._resolve_asset_path(path, "audio")
+
+        if not resolved.exists():
+            print(f"[MediaController] BGM not found: {resolved}")
+            self._invoke_callback(on_finished)
+            return
+
+        pygame.mixer.music.load(str(resolved))
+
+        volume = (
+            self._master_volume
+            * self._bgm_volume
+            / 10000
+        )
+
+        pygame.mixer.music.set_volume(volume)
+        pygame.mixer.music.play(-1 if loop else 0)
+
+        if on_finished is not None and not loop:
+
+            async def _wait():
+
+                while pygame.mixer.music.get_busy():
+                    await asyncio.sleep(0.05)
+
+                self._invoke_callback(on_finished)
+
+            try:
+                asyncio.get_running_loop().create_task(_wait())
+            except RuntimeError:
+                pass
 
 
-    def stop_bgm(self):
-        pass
+    def stop_bgm(self) -> None:
+
+        pygame.mixer.music.stop()
 
 
 
     def play_se(
         self,
         path: str,
-        on_finished=None,
-    ):
-        del path
+        on_finished: Optional[Callable[[], None]] = None,
+    ) -> None:
 
-        if on_finished:
-            self._invoke_callback(
-                on_finished
-            )
+        if not self._enabled:
+            self._invoke_callback(on_finished)
+            return
+
+        resolved = self._resolve_asset_path(path, "audio")
+
+        if not resolved.exists():
+            print(f"[MediaController] SE not found: {resolved}")
+            self._invoke_callback(on_finished)
+            return
+
+        sound = pygame.mixer.Sound(str(resolved))
+
+        volume = (
+            self._master_volume
+            * self._se_volume
+            / 10000
+        )
+
+        sound.set_volume(volume)
+
+        channel = sound.play()
+
+        if channel is None:
+            self._invoke_callback(on_finished)
+            return
+
+        self._se_sounds.append(sound)
+
+        if on_finished is not None:
+
+            async def _wait():
+
+                while channel.get_busy():
+                    await asyncio.sleep(0.02)
+
+                self._invoke_callback(on_finished)
+
+            try:
+                asyncio.get_running_loop().create_task(_wait())
+            except RuntimeError:
+                pass
 
 
-    def stop_all_audio(self):
-        self.stop_bgm()
+    def stop_all_audio(self) -> None:
+
+        pygame.mixer.music.stop()
+        pygame.mixer.stop()
 
 
 
     def set_master_volume(
         self,
         volume: int,
-    ):
+    ) -> None:
+
         self._master_volume = self._clamp_volume(volume)
+
+        pygame.mixer.music.set_volume(
+            self._master_volume
+            * self._bgm_volume
+            / 10000
+        )
 
 
 
     def set_bgm_volume(
         self,
         volume: int,
-    ):
+    ) -> None:
+
         self._bgm_volume = self._clamp_volume(volume)
+
+        pygame.mixer.music.set_volume(
+            self._master_volume
+            * self._bgm_volume
+            / 10000
+        )
 
 
 
     def set_se_volume(
         self,
         volume: int,
-    ):
+    ) -> None:
+
         self._se_volume = self._clamp_volume(volume)
 
 
