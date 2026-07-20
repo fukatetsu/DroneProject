@@ -491,15 +491,13 @@ class MediaController:
 
     def _ensure_render_loop(self):
 
-        if self._render_task is not None:
+        if (
+            self._render_task is not None
+            and not self._render_task.done()
+        ):
             return
 
-        try:
-            loop = asyncio.get_running_loop()
-
-        except RuntimeError:
-            return
-
+        loop = asyncio.get_running_loop()
 
         self._render_task = loop.create_task(
             self._render_loop()
