@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 from pathlib import Path
+import time
 from typing import Any, Callable, Optional
 
 try:
@@ -237,6 +238,9 @@ class MediaController:
         interval = 1 / fps
 
 
+        start_time = time.perf_counter()
+        frame_index = 0
+
         try:
 
             while self._video_playing:
@@ -246,12 +250,16 @@ class MediaController:
                 if not ok:
                     break
 
-
                 self._video_frame = frame
 
-                await asyncio.sleep(
-                    interval
-                )
+                frame_index += 1
+
+                target_time = start_time + frame_index / fps
+                delay = target_time - time.perf_counter()
+
+                if delay > 0:
+                    await asyncio.sleep(delay)
+
 
 
         except asyncio.CancelledError:
