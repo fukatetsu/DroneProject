@@ -26,7 +26,7 @@ except ImportError:
 
 from ..controllers.drone.drone_controller import DroneController
 from .camera_viewer import CameraViewer
-
+from .image_transition import ImageTransition
 
 class MediaController:
     """Manage all media output.
@@ -70,6 +70,17 @@ class MediaController:
         self._se_volume = 100
 
         self._root_dir = self._resolve_project_root()
+
+        self._image_transition = ImageTransition()
+
+        self._blend_task: Optional[asyncio.Task] = None
+        self._blend_generation = 0
+
+        self._blend_from = None
+        self._blend_to = None
+        self._blend_frame = None
+
+        self._blend_task = None
 
         if not pygame.mixer.get_init():
             pygame.mixer.init()
@@ -367,6 +378,9 @@ class MediaController:
 
 
         if self._display_mode == "Image":
+
+            if self._blend_frame is not None:
+                return self._blend_frame
 
             return self._image_frame
 
@@ -766,3 +780,192 @@ class MediaController:
                 int(volume),
             ),
         )
+    
+    def blend_image(
+        self,
+        from_path: str,
+        to_path: str,
+        effect: str = "fade",
+        easing: str = "linear",
+        duration: float = 1.0,
+    ) -> None:
+        """
+        Start an image transition.
+
+        The transition runs asynchronously and does not block the caller.
+        If another transition is already running, it is immediately cancelled
+        and replaced with the new transition.
+
+        Args:
+            from_path:
+                Source image path.
+                The transition starts from this image.
+
+            to_path:
+                Destination image path.
+                The transition ends with this image.
+
+            effect:
+                Transition effect.
+
+                Supported:
+                    - fade
+                    - wipe_left
+                    - wipe_right
+                    - wipe_fade_left
+                    - wipe_fade_right
+
+            easing:
+                Easing function applied to the transition progress.
+
+                Supported:
+                    - linear
+                    - ease_in
+                    - ease_out
+                    - ease_in_out
+
+            duration:
+                Transition duration in seconds.
+
+        Notes:
+            - The transition is executed in the background using an asyncio task.
+            - Starting a new transition automatically cancels any previous transition.
+            - The caller can continue executing while the transition is playing.
+        """
+
+        if not self._enabled:
+            return
+
+        self._ensure_render_loop()
+
+        from_image = self._load_image_frame(
+            self._resolve_asset_path(
+                from_path,
+                "images",
+            )
+        )
+
+        to_image = self._load_image_frame(
+            self._resolve_asset_path(
+                to_path,
+                "images",
+            )
+        )
+
+        if from_image is None or to_image is None:
+            return
+
+        # Resize if necessary
+        if from_image.shape != to_image.shape:
+            to_image = cv2.resize(
+                to_image,
+                (
+                    from_image.shape[1],
+                    from_image.shape[0],
+                ),
+            )
+
+        #
+        # Kill previous transition
+        #
+        self._blend_generation += 1
+
+        if self._blend_task is not None:
+            self._blend_task.cancel()
+
+        self._blend_from = from_image
+        self._blend_to = to_image
+
+        self._image_frame = from_image
+        self._blend_frame = from_image
+        self._display_mode = "Image"
+
+        generation = self._blend_generation
+
+        self._blend_task = asyncio.create_task(
+            self._run_image_transition(
+                effect,
+                easing,
+                duration,
+                generation,
+            )
+        )
+
+    async def _run_image_transition(
+        self,
+        effect: str,
+        easing: str,
+        duration: float,
+        generation: int,
+    ) -> None:
+        """
+        Execute image transition.
+
+        A transition automatically terminates when a
+        newer transition starts.
+        """
+
+        start = time.monotonic()
+
+        try:
+
+            while True:
+
+                #
+                # New transition has started.
+                #
+                if generation != self._blend_generation:
+                    return
+
+                raw_progress = (
+                    time.monotonic()
+                    - start
+                ) / duration
+
+                if raw_progress >= 1.0:
+                    break
+
+                progress = self._image_transition.apply_easing(
+                    raw_progress,
+                    easing,
+                )
+
+                self._blend_frame = (
+                    self._image_transition.create_frame(
+                        self._blend_from,
+                        self._blend_to,
+                        progress,
+                        effect,
+                    )
+                )
+
+                await asyncio.sleep(0.016)
+
+            #
+            # Complete transition
+            #
+            if generation == self._blend_generation:
+                self._image_frame = self._blend_to
+                self._blend_frame = None
+
+        except asyncio.CancelledError:
+            return
+
+        finally:
+
+            #
+            # Only the latest transition may clear the task.
+            #
+            if generation == self._blend_generation:
+                self._blend_task = None
+
+    def _stop_blend(self) -> None:
+        """
+        Stop current image transition.
+        """
+
+        if self._blend_task is not None:
+            self._blend_task.cancel()
+            self._blend_task = None
+
+        self._blend_frame = None
