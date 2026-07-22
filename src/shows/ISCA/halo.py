@@ -307,7 +307,7 @@ class Halo_ISCA(Show):
 
 
 
-        self.media.play_bgm("demo.mp3")
+        self.media.play_bgm("Halo.mp3")
 
 
 

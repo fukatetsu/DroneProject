@@ -7,6 +7,7 @@ from ..base.show import Show
 
 
 class FreeMove_ISCA(Show):
+    use_media_output = True
     def __init__(self, drone: DroneController,enable_output: bool | None = None) -> None:
         resolved_enable_output = (
             True if enable_output is None else enable_output
@@ -17,6 +18,7 @@ class FreeMove_ISCA(Show):
         return None
 
     async def run(self) -> None:
+        self.media.play_se("FreeMove.mp3")
         self.drone.send_rc_control(-90, 0, 0, 0)
         await asyncio.sleep(0.4)
         self.drone.send_rc_control(0, 0, 0, 0)
@@ -245,6 +247,8 @@ class FreeMove_ISCA(Show):
         await asyncio.sleep(0.15)
 
         self.drone.send_rc_control(0, 0, 0, 0)
+
+        #45.65s
 
 
     async def stop(self) -> None:

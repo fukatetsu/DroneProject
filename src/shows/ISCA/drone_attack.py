@@ -27,10 +27,14 @@ class DroneAttack_ISCA(Show):
         duration_sec: float,
         filtered_pitch: float,
         filtered_speed: float,
-        x:int = 0,
-        yaw:int = 0,
-        z:int = 0
+        x: int = 0,
+        yaw: int = 0,
+        z: int = 0,
+        max_speed: int | None = None,
     ) -> tuple[float, float]:
+
+        if max_speed is None:
+            max_speed = self.max_speed
 
         start_time = time.monotonic()
 
@@ -305,38 +309,39 @@ class DroneAttack_ISCA(Show):
         filtered_speed = 0.0
         filtered_vz = 0.0
 
+        self.media.play_bgm("DroneAttack.mp3")
+
+
         await self.drone.takeoff()
         print(f"Battery: {self.drone.state.battery}%")
         self.media.set_fullscreen(True)
-        self.media.set_window(monitor = 0)
+        self.media.set_window(monitor = 1)
         await asyncio.sleep(2)
-        # await adjust_height(self.drone, target_height=120)
+        await adjust_height(self.drone, target_height=120)
 
-        self.media.play_bgm("demo.mp3")
-        self.drone.send_rc_control(20, 80, 0, 0)
-        await asyncio.sleep(3)
-        self.drone.send_rc_control(0, 0, 0, 0)
-        await asyncio.sleep(6)
-        self.drone.send_rc_control(-30, -80, 0, 0)
-        await asyncio.sleep(3)
-        self.drone.send_rc_control(0, 0, 0, 0)
-        await asyncio.sleep(6)
-        self.drone.send_rc_control(20, 100, 20, 0)
-        await asyncio.sleep(2.8)
-        self.drone.send_rc_control(0, 0, 0, 0)
-        await asyncio.sleep(3)
-        self.drone.send_rc_control(0, -100, -20, 0)
-        await asyncio.sleep(2.8)
-        self.drone.send_rc_control(0, 0, 0, 0)
-        await asyncio.sleep(4)
-
+        # self.drone.send_rc_control(20, 80, 0, 0)
+        # await asyncio.sleep(3)
+        # self.drone.send_rc_control(0, 0, 0, 0)
+        # await asyncio.sleep(6)
+        # self.drone.send_rc_control(-30, -80, 0, 0)
+        # await asyncio.sleep(3)
+        # self.drone.send_rc_control(0, 0, 0, 0)
+        # await asyncio.sleep(6)
+        # self.drone.send_rc_control(20, 100, 20, 0)
+        # await asyncio.sleep(2.8)
+        # self.drone.send_rc_control(0, 0, 0, 0)
+        # await asyncio.sleep(3)
+        # self.drone.send_rc_control(0, -100, -20, 0)
+        # await asyncio.sleep(2.8)
+        # self.drone.send_rc_control(0, 0, 0, 0)
+        # await asyncio.sleep(4)
 
 
 
 
 
 
-        self.media.play_bgm("demo.mp3")
+
 
         # asyncio.sleep(4)
 
@@ -346,6 +351,7 @@ class DroneAttack_ISCA(Show):
                 20,
                 filtered_pitch,
                 filtered_speed,
+                max_speed=40,
 
             )
         )
@@ -355,15 +361,38 @@ class DroneAttack_ISCA(Show):
                 0,          # ud
                 0         # yaw
         )
+        await adjust_height(self.drone, target_height=150)
 
+        self.drone.send_rc_control(
+                0,          # lr
+                0,   # fb
+                0,          # ud
+                0         # yaw
+        )
+
+        await self.media.enable_camera()
         await asyncio.sleep(2)
 
         # await adjust_height(self.drone, target_height=180)
 
-        await self.media.enable_camera()
 
 
         self.media.show_camera()
+        filtered_pitch, filtered_speed = (
+            await self._follow_pitch_for_y_speed(
+                5,
+                filtered_pitch,
+                filtered_speed,
+                max_speed=30,
+
+            )
+        )
+        self.drone.send_rc_control(
+                0,          # lr
+                0,   # fb
+                0,          # ud
+                0         # yaw
+        )
 
         await asyncio.sleep(10)
 
