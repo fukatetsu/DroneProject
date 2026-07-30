@@ -57,6 +57,7 @@ class MediaController:
         # tasks
         self._render_task: Optional[asyncio.Task] = None
         self._video_task: Optional[asyncio.Task] = None
+        self._volume_fade_task: Optional[asyncio.Task] = None
 
         self._video_playing = False
 
@@ -667,7 +668,94 @@ class MediaController:
 
         self._se_volume = self._clamp_volume(volume)
 
+    def _apply_bgm_volume(self, volume: float) -> None:
+        """
+        Apply BGM volume.
 
+        Args:
+            volume:
+                BGM volume.
+                Range: 0.0 - 100.0
+        """
+
+        volume = max(0.0, min(100.0, volume))
+
+        pygame.mixer.music.set_volume(
+            (
+                self._master_volume
+                * volume
+            ) / 10000.0
+        )
+    def fade_bgm_volume(
+        self,
+        target_volume: float,
+        duration: float,
+    ) -> None:
+        """
+        Fade BGM volume.
+
+        Args:
+            target_volume:
+                Target volume.
+                Range: 0 - 100
+
+            duration:
+                Fade duration [sec].
+        """
+
+        if self._volume_fade_task is not None:
+            self._volume_fade_task.cancel()
+
+        self._volume_fade_task = asyncio.create_task(
+            self._run_bgm_volume_fade(
+                target_volume,
+                duration,
+            )
+        )
+
+    async def _run_bgm_volume_fade(
+        self,
+        target_volume: float,
+        duration: float,
+    ) -> None:
+        """
+        Fade BGM volume asynchronously.
+        """
+
+        start_volume = self._bgm_volume
+
+        start = time.monotonic()
+
+        try:
+
+            while True:
+
+                progress = min(
+                    1.0,
+                    (time.monotonic() - start) / duration,
+                )
+
+                volume = (
+                    start_volume
+                    + (target_volume - start_volume)
+                    * progress
+                )
+
+                self._bgm_volume = volume
+
+                self._apply_bgm_volume(volume)
+
+                if progress >= 1.0:
+                    break
+
+                await asyncio.sleep(1 / 60)
+
+        except asyncio.CancelledError:
+            return
+
+        finally:
+            self._bgm_volume = target_volume
+            self._apply_bgm_volume(target_volume)
 
     # =====================================================
     # Utility

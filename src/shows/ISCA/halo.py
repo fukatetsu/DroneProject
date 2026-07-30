@@ -306,9 +306,9 @@ class Halo_ISCA(Show):
         filtered_vz = 0.0
 
 
-
-        self.media.play_bgm("Halo.mp3")
-
+        self.media.set_bgm_volume(0)
+        # self.media.play_bgm("HaloFull.mp3")
+        self.media.fade_bgm_volume(100, 1)
 
 
 
@@ -427,11 +427,8 @@ class Halo_ISCA(Show):
                 0,          # ud
                 0         # yaw
         )
-
-
-        
-
-        
+        self.media.fade_bgm_volume(0, 3.0)
+        await asyncio.sleep(3.0)
 
 
 
