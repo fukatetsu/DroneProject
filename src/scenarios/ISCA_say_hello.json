@@ -1,0 +1,17 @@
+{
+  "shows": [
+
+    {
+      "id": "SayHello_ISCA",
+      "comment": "ドローン攻撃",
+      "show": "SayHello_ISCA",
+      "transition": { "type": "auto" }
+    },
+    {
+      "id": "LandingShow",
+      "comment": "着陸ショー",
+      "show": "LandingShow",
+      "transition": { "type": "auto" }
+    }
+  ]
+}

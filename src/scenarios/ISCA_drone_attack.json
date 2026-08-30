@@ -1,0 +1,11 @@
+{
+  "shows": [
+
+    {
+      "id": "DroneAttack_ISCA",
+      "comment": "ドローン攻撃",
+      "show": "DroneAttack_ISCA",
+      "transition": { "type": "auto" }
+    }
+  ]
+}

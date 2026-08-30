@@ -1,0 +1,28 @@
+{
+  "shows": [
+    {
+      "id": "TakeoffShow",
+      "comment": "離陸ショー",
+      "show": "TakeoffShow",
+      "transition": { "type": "auto" }
+    },
+    {
+      "id": "FreeMove_ISCA",
+      "comment": "自由移動",
+      "show": "FreeMove_ISCA",
+      "transition": { "type": "auto" }
+    },
+    {
+      "id": "Halo_ISCA",
+      "comment": "Haloショー",
+      "show": "Halo_ISCA",
+      "transition": { "type": "auto" }
+    },
+    {
+      "id": "LandingShow",
+      "comment": "着陸ショー",
+      "show": "LandingShow",
+      "transition": { "type": "auto" }
+    }
+  ]
+}

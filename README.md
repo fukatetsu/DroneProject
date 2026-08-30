@@ -1,43 +1,43 @@
-# 染地児童館操作方法
+# DroneProject
 
-演目は3つに分かれています。
-この演目を順番にターミナルに入力していってください。
-入力後は特別な操作はいりません。
-最後まで実行されたらEnterキーの待機待ちとなります。
-実行されてから離陸までにわざとラグを入れている箇所もあります。
+小型ドローンと人間の身体動作を組み合わせた、インタラクティブパフォーマンスシステム。
 
-## 1つ目の演目
+フープに取り付けたIMUセンサーからフープの姿勢を取得し、その動きに応じてドローンを制御します。
 
-離陸→上下移動→着陸→離陸→フープ追従→着陸
+JSONで定義したタイムラインに沿ってドローンを動作させることができます。
 
-python src/main.py --scenario src/scenarios/someji_start.json
+# Concepts
 
-## 2つ目の演目
+別ファイルを確認してください。
 
-離陸→ドローンが自由に移動→着陸
+[作品のコンセプト](docs\concepts\concept.md)
 
-python src/main.py --scenario src/scenarios/someji_mid.json
+[作品の説明](docs\concepts\description.md)
 
-## 3つ目の演目
+# Features
 
-離陸→ドローンが弧を描く→フープ追従→着陸
-python src/main.py --scenario src/scenarios/someji_last.json
+IMUによるフープの姿勢取得
+フープの動きとドローンのリアルタイム連動
+JSONによる演目（Scenario）の定義
+複数のShowの実行・管理
+緊急着陸などのオペレーション機能
 
-# コマンド
+# Documentation
 
-実行中にターミナルに入力してEnterを押すことで発行されます
+詳細はdocs/を参照してください。
 
-- p, pp ドローンの停止 Pauseキーです
-- land ドローンの着陸 Pauseの後に実行してください
+docs/
+├── concept/      # 作品概要・コンセプト
+├── usage/        # 操作方法
+└── technical/    # 技術仕様
 
-# ドローンとの接続
+# Requirements
+- Python
+- DJI Tello
+- DJITelloPy
+- IMU sensor(Geo Motion)
+- BLE
 
-ドローンとはWi-Fiで接続しています。
-ドローンの起動・再起動時にはTello から始まるアクセスポイントにPCからアクセスしてください。
-
-# フープとの接続
-
-GeoMotionを用いて接続しています。
-アプリケーションで接続が確認できれば、特に特別な操作は必要ありません。
-
-
+# Getting Started
+pip install -r requirements.txt
+python main.py
