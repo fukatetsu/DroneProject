@@ -31,7 +31,7 @@ class SayHello_ISCA(Show):
         self._running = False
 
     async def start(self) -> None:
-        self.media.set_window(monitor = 1)
+        self.media.set_window(monitor = 0)
         self.media.set_fullscreen(True)
         return None
 
@@ -41,14 +41,14 @@ class SayHello_ISCA(Show):
         self.media.play_se("SayHelloSingle.mp3")
         await adjust_height(self.drone, target_height=120, max_speed=60)
         await asyncio.sleep(1.0)
-        self.drone.send_rc_control(35, 0, 0, 0)
+        self.drone.send_rc_control(-35, 0, 0, 0)
         await asyncio.sleep(1.0)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
         await adjust_height(self.drone, target_height=40, max_speed=100)
 
         await asyncio.sleep(1.0)
-        self.drone.send_rc_control(-45, 0, 0, 0)
+        self.drone.send_rc_control(55, 0, 0, 0)
         await asyncio.sleep(1.3)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
@@ -64,7 +64,7 @@ class SayHello_ISCA(Show):
             effect="wipe_fade_left",
             duration=2,
         )
-        self.drone.send_rc_control(35, 0, 0, 0)
+        self.drone.send_rc_control(-35, 0, 0, 0)
         await asyncio.sleep(1.0)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
@@ -83,7 +83,7 @@ class SayHello_ISCA(Show):
             effect="fade",
             duration=2,
         )
-        self.drone.send_rc_control(-45, 0, 0, 0)
+        self.drone.send_rc_control(55, 0, 0, 0)
         await asyncio.sleep(1.3)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
@@ -103,7 +103,7 @@ class SayHello_ISCA(Show):
             effect="fade",
             duration=2,
         )
-        self.drone.send_rc_control(-35, 0, 0, 0)
+        self.drone.send_rc_control(35, 0, 0, 0)
         await asyncio.sleep(1.0)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
@@ -115,11 +115,11 @@ class SayHello_ISCA(Show):
             duration=2,
         )
 
-        self.drone.send_rc_control(45, 0, 0, 0)
+        self.drone.send_rc_control(-45, 0, 0, 0)
         await asyncio.sleep(1.8)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.4)
 
         self.media.blend_image(
             "Hello/スライド6.PNG",
@@ -128,11 +128,11 @@ class SayHello_ISCA(Show):
             duration=2,
         )
 
-        self.drone.send_rc_control(-45, 0, 0, 0)
+        self.drone.send_rc_control(45, 0, 0, 0)
         await asyncio.sleep(1.8)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
         self.media.blend_image(
             "Hello/スライド7.PNG",
@@ -141,7 +141,7 @@ class SayHello_ISCA(Show):
             duration=2,
         ) 
 
-        self.drone.send_rc_control(45, 0, 0, 0)
+        self.drone.send_rc_control(-45, 0, 0, 0)
         await asyncio.sleep(1.8)
         self.drone.send_rc_control(0, 0, 0, 0)
         await asyncio.sleep(2)

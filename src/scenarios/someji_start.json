@@ -18,25 +18,6 @@
         "comment": "着陸",
         "show": "LandingShow_s1",
         "transition": { "type": "auto" }
-    },
-    {
-        "id": "TakeoffShow_s2",
-        "comment": "離陸",
-        "show": "TakeoffShow_s2",
-        "transition": { "type": "auto" }
-    },
-    {
-        "id": "FollowPitchShow_s",
-        "comment": "ピッチ追従",
-        "show": "FollowPitchShow_s",
-        "transition": { "type": "auto" }
-    },
-
-    {
-        "id": "LandingShow_s1",
-        "comment": "着陸",
-        "show": "LandingShow_s1",
-        "transition": { "type": "auto" }
     }
     ]
 }

@@ -18,7 +18,10 @@ class FreeMove_ISCA(Show):
         return None
 
     async def run(self) -> None:
-        self.media.play_se("FreeMove.mp3")
+        await asyncio.sleep(1.0)
+        self.media.set_bgm_volume(0)
+        self.media.play_bgm("FreeMoveFull.mp3")
+        self.media.fade_bgm_volume(100, 1)
         self.drone.send_rc_control(-90, 0, 0, 0)
         await asyncio.sleep(0.4)
         self.drone.send_rc_control(0, 0, 0, 0)
@@ -247,7 +250,8 @@ class FreeMove_ISCA(Show):
         await asyncio.sleep(0.15)
 
         self.drone.send_rc_control(0, 0, 0, 0)
-
+        self.media.fade_bgm_volume(0, 3.0)
+        await asyncio.sleep(3.0)
         #45.65s
 
 
