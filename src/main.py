@@ -15,9 +15,11 @@ from src.registry import registry
 from src.runtime.scenario import Scenario
 from src.runtime.scenario_runner import ScenarioRunner
 
+import src.shows.rug_experiment
 import src.shows.flight
 import src.shows.someji
 import src.shows.ISCA
+
 
 from src.shows.base.show import Show
 from src.shows.flight.align_yaw_show import AlignYawShow
