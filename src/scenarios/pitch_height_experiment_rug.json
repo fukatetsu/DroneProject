@@ -1,0 +1,10 @@
+{
+    "shows": [
+    {
+        "id": "PitchHeightDemoRug",
+        "comment": "高さ変更デモ",
+        "show": "PitchHeightDemoRug",
+        "transition": { "type": "auto" }
+    }
+    ]
+}
