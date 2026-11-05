@@ -15,6 +15,7 @@ async def arc_move(
     ud: int = 0,
     interval: float = 0.1,
     target_height: int = None,
+    does_send_zero: bool = True
 ) -> None:
     """
     円弧移動
@@ -77,10 +78,10 @@ async def arc_move(
             )
 
         await asyncio.sleep(interval)
-
-    drone.send_rc_control(
-        0,
-        0,
-        0,
-        0,
-    )
+    if(does_send_zero):
+        drone.send_rc_control(
+            0,
+            0,
+            0,
+            0,
+        )
