@@ -19,6 +19,7 @@ import src.shows.rug_experiment
 import src.shows.flight
 import src.shows.someji
 import src.shows.ISCA
+import src.shows.reel
 
 
 from src.shows.base.show import Show

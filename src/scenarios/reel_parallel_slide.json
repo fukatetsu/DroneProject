@@ -1,0 +1,10 @@
+{
+    "shows": [
+    {
+        "id": "ParallelSlide",
+        "comment": "並行スライド",
+        "show": "ParallelSlide",
+        "transition": { "type": "auto" }
+    }
+    ]
+}
