@@ -1,0 +1,10 @@
+{
+    "shows": [
+    {
+        "id": "FigureEight",
+        "comment": " figure eight",
+        "show": "FigureEight",
+        "transition": { "type": "auto" }
+    }
+    ]
+}
