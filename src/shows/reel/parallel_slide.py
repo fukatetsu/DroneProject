@@ -35,15 +35,12 @@ class ParallelSlide(Show):
 
         # 画面左から右にゆっくりとスライドする
         # 演者も左から右へと動いていく
-        # await alternate_rc_control_for(self.drone, (0, 30, 20, 0), (0, 30, -20, 0), duration=5.0, interval=1.0)
-        await rc_control_for(self.drone, (0, 30, 0, 0), duration=5.0)
+        await alternate_rc_control_for(self.drone, (0, 30, 40, 0), (0, 30, -40, 0), duration=5.0, interval=2.5, does_send_zero=False)
+        # await rc_control_for(self.drone, (0, 30, 0, 0), duration=5.0)
         # await rc_control_for(self.drone, (20, 30, 0, -25), duration=2.5)
         # await rc_control_for(self.drone, (-20, 30, 0, 25), duration=2.5)
         # await rc_control_for(self.drone, (0, 100, 0, 0), duration=2.0)
 
-        self.drone.send_rc_control(0, 0, 0, 0)
-        #一瞬アイコンタクト
-        await asyncio.sleep(2.0)
 
         # 急に上昇しながら半分回転する
         # 演者はいったん下に踏み込んだ後すぐに上に上がっていく

@@ -44,6 +44,7 @@ async def alternate_rc_control_for(
     *,
     duration: float,
     interval: float = 0.1,
+    does_send_zero: bool = True
 ) -> None:
     """2つのRC指令を一定間隔で交互に送信し、指定時間後に停止する。
 
@@ -70,4 +71,5 @@ async def alternate_rc_control_for(
             remaining = end_time - time.monotonic()
             await asyncio.sleep(min(interval, remaining))
     finally:
-        drone.send_rc_control(0, 0, 0, 0)
+        if(does_send_zero):
+            drone.send_rc_control(0, 0, 0, 0)
