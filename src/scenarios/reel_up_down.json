@@ -1,0 +1,10 @@
+{
+    "shows": [
+    {
+        "id": "UpDown",
+        "comment": " updown",
+        "show": "UpDown",
+        "transition": { "type": "auto" }
+    }
+    ]
+}

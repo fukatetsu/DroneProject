@@ -1,0 +1,10 @@
+{
+    "shows": [
+    {
+        "id": "Diamond",
+        "comment": " diamond",
+        "show": "Diamond",
+        "transition": { "type": "auto" }
+    }
+    ]
+}
