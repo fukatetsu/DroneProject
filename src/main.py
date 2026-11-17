@@ -216,7 +216,8 @@ async def main() -> None:
         )
 
         controller = KeyboardController(
-            runner.send_command
+            runner.send_command,
+            runner.send_key_event,
         )
 
         controller.start()
@@ -233,7 +234,7 @@ async def main() -> None:
 
             await imu_input.stop()
 
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(asyncio.CancelledError):
                 await controller.stop()
 
     finally:

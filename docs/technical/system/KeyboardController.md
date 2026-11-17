@@ -10,6 +10,8 @@ Scenario の進行制御は ScenarioRunner が担当する。
 
 Show はキーボード入力を直接参照しない。
 
+入力はコンソールでキーを押した時点で通知し、Enter による確定を必要としない。
+
 ---
 
 # 責務
@@ -32,18 +34,34 @@ Show はキーボード入力を直接参照しない。
 
 ## イベント通知
 
-入力内容を KeyboardCommand に変換し、
-ScenarioRunner へ通知する。
+Scenario 制御キーは KeyboardCommand に変換し、ScenarioRunner へ通知する。
+それ以外のキーは Show 固有のキーイベントとして ScenarioRunner へ通知する。
 
 ```text
 Keyboard
  ↓
 KeyboardController
- ↓
-KeyboardCommand
- ↓
-ScenarioRunner
+ ├─ Scenario制御キー → KeyboardCommand → ScenarioRunner
+ └─ Show固有キー → ScenarioRunner → 現在のShow
 ```
+
+### キーバインド
+
+| キー | 操作 |
+|---|---|
+| `P` | Pause |
+| `R` | Resume |
+| `N` | Next Show |
+| `B` | Previous Show |
+| `T` | Restart Show |
+| `J` | Jump To Show（続けて Show ID を入力し Enter で確定） |
+| `L` | Land |
+| `E` | Emergency |
+| 矢印キーなど上記以外 | 現在の Show にキーイベントを通知 |
+
+Show 固有キーは押すたびに通知されます。キーリピートが有効な環境では、
+押し続けている間のリピート入力も個別のイベントとして処理されます。
+Scenario 制御に割り当てられたキーは Show 固有イベントにはなりません。
 
 ---
 
@@ -205,6 +223,19 @@ keyboard_controller.is_paused()
 Show は演出のみを担当する。
 
 進行管理は ScenarioRunner が担当する。
+
+Show 固有の入力は `key_events` に非同期イベントとして登録する。
+
+```python
+self.key_events = {
+    "UP": self.move_forward,
+}
+
+async def move_forward(self) -> None:
+    ...
+```
+
+`Show.handle_key()` が登録済みイベントのみを実行する。未登録キーは無視される。
 
 ---
 

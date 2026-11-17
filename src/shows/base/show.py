@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Awaitable, Callable, Dict
 
 from ...controllers.drone import DroneController
 from ...output import MediaController
+
+
+KeyEvent = Callable[[], Awaitable[None]]
 
 
 class Show(ABC):
@@ -21,6 +25,12 @@ class Show(ABC):
         self.drone = drone
         self._enable_output = enable_output
         self.media = MediaController(drone, enabled=enable_output)
+        self.key_events: Dict[str, KeyEvent] = {}
+
+    async def handle_key(self, key: str) -> None:
+        event = self.key_events.get(key.upper())
+        if event is not None:
+            await event()
 
     @abstractmethod
     async def start(self) -> None:

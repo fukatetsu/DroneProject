@@ -18,6 +18,9 @@ class ShowProtocol:
     async def stop(self) -> None:
         raise NotImplementedError
 
+    async def handle_key(self, key: str) -> None:
+        raise NotImplementedError(f"Show does not implement handle_key({key!r})")
+
 
 class ScenarioCommand(Enum):
     PAUSE = "pause"
@@ -69,7 +72,22 @@ class ScenarioRunner:
         command: str,
         payload: ScenarioCommandPayload = None,
     ) -> None:
+        if (
+            command == "show_key"
+            and isinstance(payload, dict)
+            and isinstance(payload.get("key"), str)
+        ):
+            await self.send_key_event(payload["key"])
+            return
         await self._command_queue.put((command, payload))
+
+    async def send_key_event(self, key: str) -> None:
+        show = self.current_show
+        if show is None:
+            return
+        await self._command_queue.put(
+            ("show_key", {"key": key.upper(), "show": show})
+        )
 
     async def run(self) -> None:
         self._running = True
@@ -310,6 +328,16 @@ class ScenarioRunner:
         command: str,
         payload: ScenarioCommandPayload,
     ) -> str:
+        if command == "show_key":
+            if (
+                isinstance(payload, dict)
+                and payload.get("show") is self.current_show
+                and isinstance(payload.get("key"), str)
+                and self.current_show is not None
+            ):
+                await self.current_show.handle_key(payload["key"])
+            return "continue"
+
         if command == ScenarioCommand.PAUSE.value:
             self._paused = True
             return "continue"
