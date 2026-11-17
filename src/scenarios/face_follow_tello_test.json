@@ -14,7 +14,7 @@
       "show": "FaceFollowShow",
       "transition": {
         "type": "duration",
-        "seconds": 30
+        "seconds": 60
       }
     },
     {

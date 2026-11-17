@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import random
 import time
-from typing import Any, Optional
+from typing import Any, List, Optional, Tuple
 
 try:
     import cv2
@@ -14,11 +14,14 @@ from ...analyzers.face_tracking_analyzer import FaceTrackingAnalyzer, VideoFrame
 from ...controllers.drone import DroneController
 from ...models.face_state import FaceDetection, FaceTrackingState
 from ..base.show import Show
+from ..motions.height_control import adjust_height
+
 
 
 class FaceFollowShow(Show):
     requires_face_analyzer = True
     use_media_output = True
+    MANUAL_CONTROL_TIMEOUT = 0.35
 
     def __init__(
         self,
@@ -30,10 +33,10 @@ class FaceFollowShow(Show):
         target_switch_interval: float = 15.0,
         target_lost_grace: float = 1.0,
         deadband: float = 0.08,
-        gain: float = 50.0,
+        gain: float = 70.0,
         yaw_gain: float = 70.0,
         vertical_target_ratio: float = 0.3,
-        max_speed: int = 80,
+        max_speed: int = 100,
         rng: Optional[random.Random] = None,
         horizontal_target_ratio: float = 0.5,
     ) -> None:
@@ -67,14 +70,29 @@ class FaceFollowShow(Show):
         self._target_id: Optional[int] = None
         self._target_selected_at = 0.0
         self._target_lost_at: Optional[float] = None
+        self._manual_rc: Optional[Tuple[int, int, int, int]] = None
+        self._manual_control_until = 0.0
+        self.key_events.update(
+            {
+                "UP": self._move_up,
+                "DOWN": self._move_down,
+                "LEFT": self._yaw_left,
+                "RIGHT": self._yaw_right,
+                "1": self._select_target_1,
+                "2": self._select_target_2,
+                "3": self._select_target_3,
+            }
+        )
 
     async def start(self) -> None:
+        await adjust_height(self.drone, target_height=120, max_speed=60)
         if self._analyzer is None:
             self._analyzer = FaceTrackingAnalyzer()
         self.media.set_enabled(True)
         self._latest_tracking_state = None
         self._target_id = None
         self._target_lost_at = None
+        self._manual_rc = None
         self.media.set_camera_frame_processor(self._annotate_frame)
         try:
             await self.media.enable_camera()
@@ -115,10 +133,7 @@ class FaceFollowShow(Show):
                 frame_failure_since = None
                 self._latest_tracking_state = state
                 detection = self._select_target(state, now)
-                if detection is None:
-                    self._send_stop()
-                else:
-                    self._send_tracking_command(detection, state)
+                self._send_current_command(detection, state, now)
                 await asyncio.sleep(self.poll_interval)
         except BaseException:
             self._send_stop()
@@ -134,7 +149,7 @@ class FaceFollowShow(Show):
                 await self.media.disable_camera()
 
     def _select_target(self, state: FaceTrackingState, now: float) -> Optional[FaceDetection]:
-        candidates = sorted(state.detections, key=lambda face: face.area, reverse=True)[:3]
+        candidates = self._numbered_candidates(state)
         by_id = {face.track_id: face for face in candidates}
 
         if self._target_id in by_id:
@@ -162,6 +177,64 @@ class FaceFollowShow(Show):
         self._target_selected_at = now
         self._target_lost_at = None
         return selected
+
+    @staticmethod
+    def _numbered_candidates(state: FaceTrackingState) -> List[FaceDetection]:
+        return sorted(state.detections, key=lambda face: face.area, reverse=True)[:3]
+
+    def _select_target_by_number(self, number: int) -> None:
+        state = self._latest_tracking_state
+        if state is None:
+            return
+        candidates = self._numbered_candidates(state)
+        if number > len(candidates):
+            return
+
+        selected = candidates[number - 1]
+        self._target_id = selected.track_id
+        self._target_selected_at = time.monotonic()
+        self._target_lost_at = None
+
+    async def _move_up(self) -> None:
+        self._set_manual_control(up_down=self.max_speed)
+
+    async def _move_down(self) -> None:
+        self._set_manual_control(up_down=-self.max_speed)
+
+    async def _yaw_left(self) -> None:
+        self._set_manual_control(yaw=-self.max_speed)
+
+    async def _yaw_right(self) -> None:
+        self._set_manual_control(yaw=self.max_speed)
+
+    async def _select_target_1(self) -> None:
+        self._select_target_by_number(1)
+
+    async def _select_target_2(self) -> None:
+        self._select_target_by_number(2)
+
+    async def _select_target_3(self) -> None:
+        self._select_target_by_number(3)
+
+    def _set_manual_control(self, up_down: int = 0, yaw: int = 0) -> None:
+        self._manual_rc = (0, 0, up_down, yaw)
+        self._manual_control_until = time.monotonic() + self.MANUAL_CONTROL_TIMEOUT
+
+    def _send_current_command(
+        self,
+        detection: Optional[FaceDetection],
+        state: FaceTrackingState,
+        now: float,
+    ) -> None:
+        if self._manual_rc is not None and now < self._manual_control_until:
+            self.drone.send_rc_control(*self._manual_rc)
+            return
+
+        self._manual_rc = None
+        if detection is None:
+            self._send_stop()
+        else:
+            self._send_tracking_command(detection, state)
 
     def _send_tracking_command(
         self,
@@ -205,6 +278,11 @@ class FaceFollowShow(Show):
             )
             return annotated
 
+        candidates = self._numbered_candidates(state)
+        candidate_numbers = {
+            detection.track_id: index
+            for index, detection in enumerate(candidates, start=1)
+        }
         for detection in state.detections:
             selected = detection.track_id == self._target_id
             color = (0, 255, 0) if selected else (255, 200, 0)
@@ -215,7 +293,13 @@ class FaceFollowShow(Show):
                 color,
                 2,
             )
-            label = "Target {}".format(detection.track_id) if selected else "Face {}".format(detection.track_id)
+            number = candidate_numbers.get(detection.track_id)
+            prefix = f"{number}: " if number is not None else ""
+            label = (
+                f"{prefix}Target {detection.track_id}"
+                if selected
+                else f"{prefix}Face {detection.track_id}"
+            )
             cv2.putText(
                 annotated,
                 label,
@@ -225,6 +309,29 @@ class FaceFollowShow(Show):
                 color,
                 2,
             )
+
+        cv2.putText(
+            annotated,
+            "Arrows: up/down altitude, left/right yaw",
+            (10, 20),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 255, 255),
+            1,
+        )
+        target_keys = "Target keys: " + "  ".join(
+            f"{index}={self._target_label(detection)}"
+            for index, detection in enumerate(candidates, start=1)
+        )
+        cv2.putText(
+            annotated,
+            target_keys if candidates else "Target keys: no faces",
+            (10, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 255, 255),
+            1,
+        )
 
         target_x = int(state.frame_width * self.horizontal_target_ratio)
         target_y = int(state.frame_height * self.vertical_target_ratio)
@@ -254,3 +361,7 @@ class FaceFollowShow(Show):
                 2,
             )
         return annotated
+
+    def _target_label(self, detection: FaceDetection) -> str:
+        prefix = "Target" if detection.track_id == self._target_id else "Face"
+        return f"{prefix} {detection.track_id}"

@@ -200,7 +200,7 @@ async def main() -> None:
             face_analyzer=FaceTrackingAnalyzer(),
             enable_output=args.camera,
             # 実機モードのRC上限。調整の考え方はdocs/technical/system/face_follow_tuning.mdを参照。
-            face_follow_max_speed=70 if args.real else None,
+            face_follow_max_speed=100 if args.real else None,
         )
 
         # --------------------------------------------

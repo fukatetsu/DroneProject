@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 
 import numpy as np
 import pytest
@@ -15,6 +16,17 @@ from src.registry.show_registry import ShowRegistry
 from src.runtime.scenario import Scenario, ScenarioStep, Transition
 from src.runtime.scenario_runner import ScenarioCommand, ScenarioRunner
 from src.shows.interaction.face_follow_show import FaceFollowShow
+
+
+async def _skip_initial_height_adjustment(
+    drone: object,
+    target_height: int,
+    max_speed: int,
+) -> None:
+    assert drone is not None
+    assert target_height > 0
+    assert max_speed > 0
+from src.shows.interaction import face_follow_show as face_follow_module
 
 
 def test_face_geometry_and_tracking_id_lifetime():
@@ -143,6 +155,11 @@ def test_mock_stream_stays_active_until_all_users_stop():
 def test_camera_viewer_and_face_follow_share_mock_stream(monkeypatch):
     monkeypatch.setattr(MediaController, "show_camera", lambda media: None)
     monkeypatch.setattr(MediaController, "show_black", lambda media: None)
+    monkeypatch.setattr(
+        face_follow_module,
+        "adjust_height",
+        _skip_initial_height_adjustment,
+    )
 
     async def verify_shared_stream():
         drone = MockDroneController()
@@ -166,6 +183,19 @@ def test_camera_viewer_and_face_follow_share_mock_stream(monkeypatch):
 
 def test_face_follow_displays_annotated_camera_frame(monkeypatch):
     calls = []
+    overlay_text = []
+    put_text = face_follow_module.cv2.putText
+
+    def record_text(frame, text, *args, **kwargs):
+        overlay_text.append(text)
+        return put_text(frame, text, *args, **kwargs)
+
+    monkeypatch.setattr(face_follow_module.cv2, "putText", record_text)
+    monkeypatch.setattr(
+        face_follow_module,
+        "adjust_height",
+        _skip_initial_height_adjustment,
+    )
 
     async def enable_camera(media):
         calls.append("enable")
@@ -199,6 +229,9 @@ def test_face_follow_displays_annotated_camera_frame(monkeypatch):
         assert annotated is not frame
         assert np.any(annotated != frame)
         assert not np.any(frame)
+        assert "Arrows: up/down altitude, left/right yaw" in overlay_text
+        assert "Target keys: 1=Target 3" in overlay_text
+        assert "1: Target 3" in overlay_text
         assert show.media._enabled is True
         assert calls == ["enable", "show"]
 
@@ -206,6 +239,59 @@ def test_face_follow_displays_annotated_camera_frame(monkeypatch):
         assert calls[-1] == "disable"
 
     asyncio.run(verify_display())
+
+
+def test_face_follow_manual_controls_are_serialized_with_tracking_and_select_target():
+    class RecordingDrone:
+        def __init__(self):
+            self.commands = []
+
+        def send_rc_control(self, left_right, forward_back, up_down, yaw):
+            self.commands.append((left_right, forward_back, up_down, yaw))
+
+    async def verify_controls():
+        drone = RecordingDrone()
+        show = FaceFollowShow(
+            drone,
+            analyzer=FaceTrackingAnalyzer(detector=lambda frame: ()),
+            max_speed=45,
+        )
+        faces = (
+            FaceDetection(1, 0, 0, 20, 20),
+            FaceDetection(2, 40, 40, 30, 30),
+            FaceDetection(3, 80, 80, 10, 10),
+        )
+        state = FaceTrackingState(faces, 100, 100, 1.0)
+        show._latest_tracking_state = state
+
+        await show.handle_key("2")
+        assert show._target_id == 1
+        await show.handle_key("UP")
+        assert drone.commands == []
+
+        now = time.monotonic()
+        show._send_current_command(faces[0], state, now)
+        assert drone.commands == [(0, 0, 45, 0)]
+
+        show._send_current_command(faces[0], state, now + 1)
+        assert drone.commands == [(0, 0, 45, 0), (0, 0, 20, -45)]
+
+        await show.handle_key("DOWN")
+        now = time.monotonic()
+        show._send_current_command(faces[0], state, now)
+        assert drone.commands[-1] == (0, 0, -45, 0)
+
+        await show.handle_key("LEFT")
+        now = time.monotonic()
+        show._send_current_command(faces[0], state, now)
+        assert drone.commands[-1] == (0, 0, 0, -45)
+
+        await show.handle_key("RIGHT")
+        now = time.monotonic()
+        show._send_current_command(faces[0], state, now)
+        assert drone.commands[-1] == (0, 0, 0, 45)
+
+    asyncio.run(verify_controls())
 
 
 def test_face_follow_is_registered_with_its_analyzer(monkeypatch):
@@ -324,6 +410,11 @@ def test_mock_face_follow_sends_limited_rc_and_stops_without_camera(monkeypatch)
     result = {}
     monkeypatch.setattr(MediaController, "show_camera", lambda media: None)
     monkeypatch.setattr(MediaController, "show_black", lambda media: None)
+    monkeypatch.setattr(
+        face_follow_module,
+        "adjust_height",
+        _skip_initial_height_adjustment,
+    )
 
     async def run_show():
         drone = MockDroneController()
@@ -371,6 +462,11 @@ def test_face_follow_stops_after_video_failure_timeout(monkeypatch):
     commands = []
     monkeypatch.setattr(MediaController, "show_camera", lambda media: None)
     monkeypatch.setattr(MediaController, "show_black", lambda media: None)
+    monkeypatch.setattr(
+        face_follow_module,
+        "adjust_height",
+        _skip_initial_height_adjustment,
+    )
 
     async def run_show():
         drone = MockDroneController()
@@ -401,6 +497,11 @@ def test_face_follow_stops_after_video_failure_timeout(monkeypatch):
 def test_land_cancels_face_follow_before_running_callback(monkeypatch):
     monkeypatch.setattr(MediaController, "show_camera", lambda media: None)
     monkeypatch.setattr(MediaController, "show_black", lambda media: None)
+    monkeypatch.setattr(
+        face_follow_module,
+        "adjust_height",
+        _skip_initial_height_adjustment,
+    )
 
     async def run_scenario():
         drone = MockDroneController()
