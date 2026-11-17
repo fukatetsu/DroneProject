@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import time
 from typing import Optional
 
 try:
     from djitellopy import Tello
 except ImportError:  # pragma: no cover
     Tello = None
-
-try:
-    import cv2
-except ImportError:
-    cv2 = None
 
 from ...models.drone_state import DroneState
 from .drone_controller import DroneController
@@ -28,7 +24,9 @@ class TelloController(DroneController):
         self._stop_event = asyncio.Event()
         self._command_lock = asyncio.Lock()
         self._latest_frame = None
+        self._latest_frame_captured_at: Optional[float] = None
         self._video_task: Optional[asyncio.Task[None]] = None
+        self._video_stream_active = False
 
     @property
     def state(self) -> DroneState:
@@ -182,7 +180,10 @@ class TelloController(DroneController):
 
     def start_video_stream(self) -> None:
         """Start video stream with background frame capture task."""
+        if self._video_stream_active:
+            return
         self._tello.streamon()
+        self._video_stream_active = True
         # Start background task to continuously capture frames
         if self._video_task is None:
             try:
@@ -194,11 +195,15 @@ class TelloController(DroneController):
 
     def stop_video_stream(self) -> None:
         """Stop video stream and background frame capture task."""
+        if not self._video_stream_active:
+            return
+        self._video_stream_active = False
         self._tello.streamoff()
         if self._video_task is not None:
             self._video_task.cancel()
             self._video_task = None
         self._latest_frame = None
+        self._latest_frame_captured_at = None
 
     def get_video_frame(self):
         """
@@ -208,6 +213,9 @@ class TelloController(DroneController):
         Returns None if frame is not available yet.
         """
         return self._latest_frame
+
+    def get_video_frame_captured_at(self) -> Optional[float]:
+        return self._latest_frame_captured_at
 
     async def _capture_frames(self) -> None:
         """
@@ -223,12 +231,10 @@ class TelloController(DroneController):
                     frame_read = await loop.run_in_executor(None, self._tello.get_frame_read)
                     if frame_read is not None and frame_read.frame is not None:
                         frame = frame_read.frame
-                        
-                        # Convert BGR to RGB
-                        if cv2 is not None:
-                            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        
+
+                        # DJITelloPy decodes frames through PIL Image.to_image(), which is RGB.
                         self._latest_frame = frame
+                        self._latest_frame_captured_at = time.monotonic()
                 except Exception:
                     pass
                 
@@ -236,6 +242,7 @@ class TelloController(DroneController):
                 await asyncio.sleep(0.01)
         except asyncio.CancelledError:
             self._latest_frame = None
+            self._latest_frame_captured_at = None
 
     async def _monitor_state_loop(self):
         loop = asyncio.get_event_loop()

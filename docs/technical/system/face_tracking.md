@@ -2,9 +2,11 @@
 
 ## 1. 目的と位置づけ
 
-カメラ画像から顔を検出・追跡し、選択した人物が画面中央に映るようにドローンの向きと高度を調整する機能の設計を定める。
+カメラ画像から顔を検出・追跡し、選択した人物が画面内の設定した目標位置に映るようにドローンの向きと高度を調整する機能の設計を定める。
 
-本書は既存コードを調査したうえで、実装済みの機能と今後追加する機能を分けて記述する。顔検出・顔追跡・人物追従は現時点では未実装である。
+本書は既存コードを調査したうえで、実装済みの機能と今後追加する機能を分けて記述する。顔検出・顔追跡・人物追従の初期実装は完了しており、Mockと合成フレームで検証できる。実機での制御方向・性能・安全条件は未検証であり、実機飛行には使用しないこと。
+
+初期実装ではOpenCVのHaar Cascadeを顔検出に使い、矩形中心の距離による一時トラックIDを割り当てる。`FaceFollowShow`は自動離陸・着陸を行わず、左右yaw軸と上下up/down軸のみを制御する。
 
 ## 2. 既存コードの確認結果
 
@@ -12,7 +14,7 @@
 |---|---|---|
 | `DroneController` | ドローン制御、状態取得、映像ストリームの抽象インターフェース | フレーム取得とRC制御の共通窓口 |
 | `TelloController` | Tello映像をバックグラウンドで取得し、最新フレームを保持 | 実機映像の供給元 |
-| `MockDroneController` | PCカメラを使った映像取得とドローン動作のモック | PC上での開発・統合テスト |
+| `MockDroneController` | PCカメラまたはテスト用合成フレームとドローン動作のモック | PC上の開発・統合テスト |
 | `CameraViewer` | `DroneController.get_video_frame()`からフレームを取得 | 表示用。画像解析の責務は持たせない |
 | `MediaController` | `CameraViewer`の起動、表示ループ、画面出力を管理 | 任意のデバッグ表示に利用 |
 | `Show` | `start() / run() / stop()`の演出ライフサイクルと`DroneController`を提供 | 追従制御の実行場所 |
@@ -20,7 +22,7 @@
 | `ShowRegistry`・`main.py` | Show名の登録とシナリオからの生成 | 新しいShowと解析器の依存を注入 |
 | `DroneState` | 高度、速度、yaw等のドローン状態を保持 | 高度制限・飛行状態の参照候補 |
 
-`TelloController.get_video_frame()`は最新フレームを非ブロッキングで返し、OpenCVが利用可能な場合はBGRからRGBへ変換する。ただし、現行APIはフレームの取得時刻や連番を返さないため、古いフレームを確実に判定するにはフレームメタデータの追加が必要である。画像取得と表示は既に分離されているため、顔解析を`CameraViewer`や`MediaController`へ追加しない。
+`TelloController.get_video_frame()`と`MockDroneController.get_video_frame()`はRGBフレームを返し、最新フレームの単調時計ベース取得時刻も取得できる。DJITelloPyはPyAVフレームをPIL画像に変換してNumPy配列化するため、TelloのフレームはすでにRGBである。ここでBGR→RGB変換を重ねるとR/Bが入れ替わるため、Tello側では変換しない。顔解析器はRGBを入力として古いフレームを拒否し、OpenCVの画面表示直前にRGBからBGRへ変換する。
 
 既存の`Analyzer`基底クラスは`ImuState`から`HoopState`を作るための型に結び付いている。顔解析器はこの基底クラスを無理に継承せず、顔画像用の状態型とAPIを定義する。
 
@@ -50,12 +52,12 @@ DroneController.get_video_frame()
 
 | パス | 状態 | 責務 |
 |---|---|---|
-| `src/models/face_state.py` | 新規 | 顔検出結果と追跡状態の不変データモデル |
-| `src/analyzers/face_tracking_analyzer.py` | 新規 | フレームから顔を検出し、フレーム間でトラックIDを関連付ける |
-| `src/shows/interaction/face_follow_show.py` | 新規 | 候補選択、対象切替、追従用RC制御、安全な停止 |
-| `src/main.py` | 変更候補 | 解析器を生成し、Showのファクトリへ注入 |
-| `src/registry/show_registry.py` | 原則変更なし | 既存のファクトリ機構を利用 |
-| `src/scenarios/` | 新規JSON候補 | 追従Showを起動するシナリオを定義 |
+| `src/models/face_state.py` | 実装済み | 顔検出結果と追跡状態の不変データモデル |
+| `src/analyzers/face_tracking_analyzer.py` | 実装済み | フレームから顔を検出し、フレーム間でトラックIDを関連付ける |
+| `src/shows/interaction/face_follow_show.py` | 実装済み | 候補選択、対象切替、追従用RC制御、安全な停止 |
+| `src/main.py` | 実装済み | 解析器を生成し、Showのファクトリへ注入 |
+| `src/registry/show_registry.py` | 変更なし | 既存のファクトリ機構を利用 |
+| `src/scenarios/face_follow_mock.json` | 実装済み | Mockで追従Showを起動するシナリオ |
 
 `src/inputs/imu/`はIMU入力専用の既存構成である。ドローン映像は既存の`DroneController`が供給するため、映像を重複取得する入力クラスは追加しない。将来、複数のカメラ入力方式が必要になった場合に、共通の映像入力インターフェースを設ける。
 
@@ -99,7 +101,7 @@ DroneController.get_video_frame()
 5. 前フレームの矩形との重なりや中心距離などで対応付けし、継続するトラックにはIDを維持する。一定フレーム以上見つからないIDは破棄する。
 6. 顔が検出されない場合も、正常な解析結果として空の一覧を返す。
 
-検出器、関連付け方式、検出頻度は既存依存と実機の性能を測って選定する。現行`requirements.txt`にはOpenCVとNumPyがあるが、顔検出・追跡専用ライブラリは定義されていない。追加依存を決める前に、必要精度と実機性能を評価する。
+検出器は既存依存のOpenCV Haar Cascade、対応付けは顔矩形中心の距離、検出頻度はShowの制御周期（既定0.1秒）を採用した。検出器はテストで差し替え可能であり、追加依存はない。必要精度と実機性能の評価は今後行う。
 
 ## 7. 追従対象の選択
 
@@ -114,19 +116,19 @@ DroneController.get_video_frame()
 
 ## 8. 追従制御
 
-`FaceFollowShow`は`Show`の`start() / run() / stop()`に従い、選択対象の顔中心と画像中心との差からRC指令を計算する。制御ループは既存のShowと同様に`asyncio`で周期実行し、周期は設定値として持つ。
+`FaceFollowShow`は`Show`の`start() / run() / stop()`に従い、選択対象の顔中心と画像内の目標位置との差からRC指令を計算する。目標位置は`horizontal_target_ratio`と`vertical_target_ratio`で調整する。制御ループは既存のShowと同様に`asyncio`で周期実行し、周期は設定値として持つ。
 
 正規化誤差の定義案:
 
 ```text
-error_x = (face_center_x - frame_width / 2) / (frame_width / 2)
-error_y = (face_center_y - frame_height / 2) / (frame_height / 2)
+error_x = (face_center_x - frame_width * horizontal_target_ratio) / (frame_width / 2)
+error_y = (face_center_y - frame_height * vertical_target_ratio) / (frame_height / 2)
 ```
 
-- 左右誤差はyaw軸、上下誤差は`up_down`軸に割り当てる。
+- 左右誤差はyaw軸、上下誤差は`up_down`軸に割り当てる。現在の水平・垂直目標点はどちらも画面幅・高さの50%（中央）。画面上には両方の目標線を表示する。
 - デッドバンドを設け、誤差が小さい間は該当軸を0にする。
 - 比例ゲインとRC指令の最大値を設定可能にし、TelloのRC範囲内に制限する。
-- 画面上下と上昇・下降、画面左右とyaw方向の符号は、実機で低速・低高度から確認して確定する。
+- 現在の既定値はデッドバンド0.08、垂直比例ゲイン50、yaw比例ゲイン30、水平・垂直目標点0.5、最大速度50、制御周期0.1秒。実機モードでは`main.py`から最大RC速度40を設定する。目標位置、ゲイン、速度上限の見方と調整方法は[顔追従の調整ガイド](./face_follow_tuning.md)を参照する。Telloの正のyawは時計回りとして、画面右側の顔へ向く符号にする。
 - 顔矩形の大きさを使った前後移動は本設計の初期範囲に含めない。近さ推定の信頼性と衝突回避要件が定まってから別途設計する。
 - 命令を送る頻度を抑え、フレーム更新が止まった場合には追従命令を継続しない。
 
@@ -163,16 +165,17 @@ error_y = (face_center_y - frame_height / 2) / (frame_height / 2)
 
 ## 10. カメラストリームと表示の統合
 
-現在は`CameraViewer.start()`が`DroneController.start_video_stream()`を呼び、停止時に`stop_video_stream()`を呼ぶ。一方、顔解析もフレームを必要とする。複数の利用者が個別に開始・停止すると、二重の`streamon()`、片方の停止による他方のフレーム喪失が起こり得る。
+`CameraViewer.start()`と`FaceFollowShow.start()`は同じ`DroneController`の映像ストリームを利用する。所有者単位で取得・解放し、最初の所有者でストリームを開始、最後の所有者で停止するため、重複した`streamon()`や片方の停止による他方のフレーム喪失を防ぐ。
 
-実装時は、映像ストリームの開始・停止を単一の所有者に集約する。顔解析と任意の`CameraViewer`は同じストリーム・同じ最新フレームを読むだけとし、どちらか一方が勝手に共有ストリームを停止しないようにする。これは統合時に必要な設計変更であり、現在の`CameraViewer`がその共有管理を実装済みという意味ではない。
+顔解析と任意の`CameraViewer`は同じストリーム・同じ最新フレームを読む。各利用者は自身が取得した開始分のみ停止し、共有中のストリームを単独で終了しない。
 
 ## 11. Show・Scenarioへの統合
 
 - `FaceFollowShow`は`Show`を継承し、ドローン命令を`DroneController`経由で送る。
-- 顔解析器をShowの外部依存として注入する。既存の`register_builtin_shows()`は`requires_analyzer`の場合に`HoopAnalyzer`を渡す実装なので、顔解析器の注入方法を追加する際は、フラグと型が不一致にならないようファクトリを拡張する。
+- 顔解析器をShowの外部依存として注入する。`register_builtin_shows()`は既存の`requires_analyzer`による`HoopAnalyzer`注入と、新設の`requires_face_analyzer`による顔解析器注入を分けて扱う。
 - `ShowRegistry`の名前登録と`ScenarioRunner`のライフサイクルを利用し、シナリオJSONから追従Showを起動する。
-- `--camera`は現在MediaControllerの出力有効化用であり、追従機能の映像入力開始オプションとして扱わない。必要なら入力有効化と表示有効化を別の設定にする。
+- `FaceFollowShow`の実行中はMediaControllerのカメラ表示を有効にし、顔検出枠と追従対象IDをPC画面へ重ねて表示する。追従対象は緑枠、それ以外の検出顔は別色で表示する。
+- `--camera`は他Show向けのMediaController出力設定であり、FaceFollowShowではPCカメラ映像と解析表示を常に有効にする。
 - `MockDroneController`のPCカメラとモック飛行制御で、検出・対象選択・状態遷移を実機接続なしで検証できるようにする。
 
 ## 12. テスト計画
@@ -197,4 +200,8 @@ error_y = (face_center_y - frame_height / 2) / (frame_height / 2)
 - 自動離陸・着陸を将来導入する場合の明示的な許可条件
 - 映像ストリームの共通所有者とプレビュー表示との共有方法
 
-これらの値を実機で検証し、決定後に設定値・テスト条件として固定する。未確定の値を暗黙の既定値として飛行制御に使わない。
+上記の初期値はソフトウェアテスト用であり、実機で検証済みの値ではない。実機試験は十分な広さのある障害物のない場所で、機体を目視できる補助者と手動着陸可能な状態を確保し、制御方向を慎重に確認する。顔追従は左右yaw・上下のRC指令を出し、前後には移動しない。検出中断や故障時には直ちに `l` を入力して着陸すること。`emergency`はモーター停止となるため墜落の危険がある緊急時のみ使用すること。
+
+実機接続を強制するテストシナリオ（離陸後RC上限40で30秒追従し、自動着陸）: `python -m src.main --real --scenario src/scenarios/face_follow_tello_test.json`。`--real`はTello接続失敗時にMockへフォールバックせずエラー終了する。追従中に`l`を入力すると即時着陸する。実機使用前に制御方向・速度・高度・処理性能を検証すること。
+
+Mockテストでは`MockDroneController.set_video_frame()`に合成フレームを渡すことでPCカメラを開かずに検証できる。PCカメラのライブ映像と検出枠をPC画面に表示してシナリオを実行する場合は`python -m src.main --mock --scenario src/scenarios/face_follow_mock.json`を使う。

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import time
 from typing import Optional
 
 try:
@@ -22,6 +23,7 @@ class MockDroneController(DroneController):
         self._video_capture: Optional[object] = None
         self._video_stream_active = False
         self._latest_frame = None
+        self._latest_frame_captured_at: Optional[float] = None
         self._video_task: Optional[asyncio.Task[None]] = None
 
     @property
@@ -178,9 +180,13 @@ class MockDroneController(DroneController):
         print(f"[MockDroneController] send_rc_control({left_right}, {forward_back}, {up_down}, {yaw})")
 
     def start_video_stream(self) -> None:
+        if self._video_stream_active:
+            return
         if cv2 is None:
-            raise ImportError("opencv-python is required for video stream")
-        self._video_capture = cv2.VideoCapture(0)
+            if self._latest_frame is None:
+                raise ImportError("opencv-python is required for video stream")
+        elif self._latest_frame is None:
+            self._video_capture = cv2.VideoCapture(0)
         self._video_stream_active = True
         # Start background task to continuously capture frames
         if self._video_task is None:
@@ -193,6 +199,8 @@ class MockDroneController(DroneController):
         print("[MockDroneController] start_video_stream")
 
     def stop_video_stream(self) -> None:
+        if not self._video_stream_active:
+            return
         self._video_stream_active = False
         if self._video_task is not None:
             self._video_task.cancel()
@@ -201,11 +209,20 @@ class MockDroneController(DroneController):
             self._video_capture.release()
             self._video_capture = None
         self._latest_frame = None
+        self._latest_frame_captured_at = None
         print("[MockDroneController] stop_video_stream")
 
     def get_video_frame(self):
         """Get the latest buffered video frame (non-blocking)."""
         return self._latest_frame
+
+    def get_video_frame_captured_at(self) -> Optional[float]:
+        return self._latest_frame_captured_at
+
+    def set_video_frame(self, frame) -> None:
+        """Supply a frame to the mock without opening a physical camera."""
+        self._latest_frame = frame
+        self._latest_frame_captured_at = time.monotonic()
 
     async def _capture_frames(self) -> None:
         """Background task to continuously capture frames."""
@@ -220,6 +237,7 @@ class MockDroneController(DroneController):
                             if cv2 is not None:
                                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                             self._latest_frame = frame
+                            self._latest_frame_captured_at = time.monotonic()
                 except Exception:
                     pass
                 
@@ -227,3 +245,4 @@ class MockDroneController(DroneController):
                 await asyncio.sleep(0.01)
         except asyncio.CancelledError:
             self._latest_frame = None
+            self._latest_frame_captured_at = None

@@ -47,6 +47,7 @@ class MediaController:
         # camera
         self._camera_enabled = False
         self._camera_viewer: Optional[CameraViewer] = None
+        self._camera_frame_processor: Optional[Callable[[Any], Any]] = None
 
         # display
         self._display_mode = "Black"
@@ -136,7 +137,17 @@ class MediaController:
             self.show_black()
             return
 
+        if self._camera_viewer is not None:
+            self._camera_viewer.resume()
         self._display_mode = "Camera"
+
+    def set_camera_frame_processor(
+        self,
+        processor: Optional[Callable[[Any], Any]],
+    ) -> None:
+        self._camera_frame_processor = processor
+
+
 
     async def shutdown(self) -> None:
         self._stop_video()
@@ -158,6 +169,10 @@ class MediaController:
             cv2.waitKey(1)   # destroyWindowを反映させる
             self._window_created = False
 
+    def _pause_camera_viewer(self) -> None:
+        if self._camera_viewer is not None:
+            self._camera_viewer.pause()
+
 
 
     # =====================================================
@@ -169,6 +184,7 @@ class MediaController:
         if not self._enabled:
             return
 
+        self._pause_camera_viewer()
         self._ensure_render_loop()
 
         resolved_path = self._resolve_asset_path(
@@ -202,6 +218,7 @@ class MediaController:
         if not self._enabled:
             return
 
+        self._pause_camera_viewer()
         self._ensure_render_loop()
 
         self._stop_video()
@@ -368,7 +385,15 @@ class MediaController:
             if self._camera_viewer is None:
                 return None
 
-            return self._camera_viewer.get_frame()
+            frame = self._camera_viewer.get_frame()
+            if frame is None or self._camera_frame_processor is None:
+                processed_frame = frame
+            else:
+                processed_frame = self._camera_frame_processor(frame)
+
+            if processed_frame is not None and cv2 is not None:
+                return cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
+            return processed_frame
 
 
 
@@ -431,6 +456,8 @@ class MediaController:
             return
 
         self._ensure_window()
+        if cv2 is None or not self._window_created:
+            return
 
         # モニタ位置を取得
         if monitor is not None:
@@ -476,6 +503,8 @@ class MediaController:
             return
 
         self._ensure_window()
+        if not self._window_created:
+            return
 
         cv2.setWindowProperty(
             self._window_title,
@@ -512,7 +541,10 @@ class MediaController:
         ):
             return
 
-        loop = asyncio.get_running_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
 
         self._render_task = loop.create_task(
             self._render_loop()

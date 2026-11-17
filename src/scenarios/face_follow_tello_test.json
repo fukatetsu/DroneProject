@@ -1,0 +1,29 @@
+{
+  "shows": [
+    {
+      "id": "TakeoffShow",
+      "comment": "実機テスト: 安全な飛行空間を確保し、準備ができてから離陸",
+      "show": "TakeoffShow",
+      "transition": {
+        "type": "auto"
+      }
+    },
+    {
+      "id": "FaceFollowShow",
+      "comment": "実機テスト: RC上限40で30秒間の低速顔追従。必要なら l で着陸",
+      "show": "FaceFollowShow",
+      "transition": {
+        "type": "duration",
+        "seconds": 30
+      }
+    },
+    {
+      "id": "LandingShow",
+      "comment": "実機テスト終了: 自動着陸",
+      "show": "LandingShow",
+      "transition": {
+        "type": "auto"
+      }
+    }
+  ]
+}

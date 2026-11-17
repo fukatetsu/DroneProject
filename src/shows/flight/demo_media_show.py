@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+from screeninfo import get_monitors
+
 from ...controllers.drone import DroneController
 from ..base.show import Show
 
@@ -20,7 +22,9 @@ class DemoMediaShow(Show):
         self._running = True
         await self.media.enable_camera()
         self.media.set_fullscreen(True)
-        self.media.set_window(monitor = 1)
+        monitors = get_monitors()
+        if monitors:
+            self.media.set_window(monitor=min(1, len(monitors) - 1))
 
     async def run(self) -> None:
         if not self._running:

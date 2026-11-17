@@ -4,3 +4,6 @@ from .imu_state import ImuState
 from .rotation_direction import RotationDirection
 
 __all__ = ["DroneState", "HoopState", "ImuState", "RotationDirection"]
+from .face_state import FaceDetection, FaceTrackingState
+
+__all__ = ["FaceDetection", "FaceTrackingState"]

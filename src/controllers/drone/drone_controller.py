@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Optional, Set
 
 from ...models.drone_state import DroneState
 
@@ -131,6 +132,28 @@ class DroneController(ABC):
     @abstractmethod
     def get_video_frame(self):
         pass
+
+    def get_video_frame_captured_at(self) -> Optional[float]:
+        """Return the monotonic capture time for the latest frame, if available."""
+        return None
+
+    def acquire_video_stream(self, owner: object) -> None:
+        owners: Set[object] = getattr(self, "_video_stream_owners", set())
+        if owner in owners:
+            return
+        if not owners:
+            self.start_video_stream()
+        owners.add(owner)
+        self._video_stream_owners = owners
+
+    def release_video_stream(self, owner: object) -> None:
+        owners: Set[object] = getattr(self, "_video_stream_owners", set())
+        if owner not in owners:
+            return
+        owners.remove(owner)
+        if not owners:
+            self._video_stream_owners = owners
+            self.stop_video_stream()
 
     @abstractmethod
     def pause(self) -> None:

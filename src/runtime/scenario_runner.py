@@ -335,18 +335,27 @@ class ScenarioRunner:
             return "jump"
 
         if command == ScenarioCommand.LAND.value:
+            await self._cancel_current_show_task()
             if self.on_land is not None:
                 await self.on_land()
             self._running = False
             return "stop"
 
         if command == ScenarioCommand.EMERGENCY.value:
+            await self._cancel_current_show_task()
             if self.on_emergency is not None:
                 await self.on_emergency()
             self._running = False
             return "stop"
 
         return "continue"
+
+    async def _cancel_current_show_task(self) -> None:
+        task = self._current_show_task
+        if task is not None and not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
     async def stop(self) -> None:
         self._running = False

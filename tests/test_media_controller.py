@@ -1,5 +1,6 @@
 import asyncio
 
+import numpy as np
 import pytest
 
 from src.output.camera_viewer import CameraViewer
@@ -22,11 +23,14 @@ class FakeDrone:
 
 
 class FakeCv2:
+    WINDOW_NORMAL = 0
+    COLOR_RGB2BGR = 1
+
     def __init__(self) -> None:
         self.windows = []
 
-    def namedWindow(self, title: str) -> None:
-        self.windows.append(("named", title))
+    def namedWindow(self, title: str, flags=None) -> None:
+        self.windows.append(("named", title, flags))
 
     def destroyWindow(self, title: str) -> None:
         self.windows.append(("destroy", title))
@@ -36,6 +40,10 @@ class FakeCv2:
 
     def waitKey(self, delay: int) -> int:
         return 0
+
+    def cvtColor(self, frame, conversion):
+        assert conversion == self.COLOR_RGB2BGR
+        return frame[..., ::-1].copy()
 
 
 def test_camera_viewer_start_and_stop(monkeypatch):
@@ -59,12 +67,16 @@ def test_media_controller_enable_and_disable_camera(monkeypatch):
     drone = FakeDrone()
     controller = MediaController(drone)
 
-    asyncio.run(controller.enable_camera())
-    assert controller.is_camera_enabled() is True
-    assert controller._camera_viewer is not None
+    async def verify_lifecycle():
+        await controller.enable_camera()
+        assert controller.is_camera_enabled() is True
+        assert controller._camera_viewer is not None
 
-    asyncio.run(controller.disable_camera())
-    assert controller.is_camera_enabled() is False
+        await controller.disable_camera()
+        assert controller.is_camera_enabled() is False
+        await controller.shutdown()
+
+    asyncio.run(verify_lifecycle())
 
 
 def test_media_controller_pauses_camera_viewer_for_other_content(monkeypatch):
@@ -106,3 +118,22 @@ def test_media_and_camera_use_same_window_title(monkeypatch):
 
     viewer = CameraViewer(drone)
     assert viewer._window_title == "Drone Media Output"
+
+
+def test_camera_preview_converts_rgb_frames_to_bgr_for_opencv(monkeypatch):
+    fake_cv2 = FakeCv2()
+    monkeypatch.setattr("src.output.media_controller.cv2", fake_cv2)
+
+    rgb_frame = np.array([[[255, 0, 0]]], dtype=np.uint8)
+
+    class FrameViewer:
+        def get_frame(self):
+            return rgb_frame
+
+    controller = MediaController(FakeDrone())
+    controller._camera_viewer = FrameViewer()
+    controller._camera_enabled = True
+    controller._display_mode = "Camera"
+
+    displayed_frame = controller._get_current_frame()
+    assert displayed_frame.tolist() == [[[0, 0, 255]]]

@@ -1,0 +1,12 @@
+{
+  "shows": [
+    {
+      "id": "FaceFollowShow",
+      "comment": "Mockカメラ映像を使った顔追従（実機では要校正）",
+      "show": "FaceFollowShow",
+      "transition": {
+        "type": "manual"
+      }
+    }
+  ]
+}
